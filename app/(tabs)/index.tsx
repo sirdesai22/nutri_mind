@@ -1,8 +1,10 @@
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { analyzeFood } from '@/utils/gemini';
+import { storage } from '@/utils/storage';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useCallback, useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 
 interface Message {
   id: string;
@@ -15,6 +17,7 @@ interface Message {
   };
   isUser: boolean;
   timestamp: Date;
+  associatedMessageId?: string; // Reference to the paired message
 }
 
 export default function HomeScreen() {
@@ -26,60 +29,164 @@ export default function HomeScreen() {
     protein: 0,
     fats: 0,
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSendMessage = useCallback(async (text: string) => {
-    // TODO: Replace with actual Gemini API call
-    // Mock response for now
-    const mockResponse = {
-      calories: 250,
-      macros: {
-        carbs: 30,
-        protein: 15,
-        fats: 8,
-      },
-    };
+    const userMessageId = Date.now().toString();
+    try {
+      setIsLoading(true);
+      
+      // Create user message first
+      const userMessage: Message = {
+        id: userMessageId,
+        text,
+        calories: 0,
+        macros: { carbs: 0, protein: 0, fats: 0 },
+        isUser: true,
+        timestamp: new Date(),
+      };
 
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      text,
-      calories: mockResponse.calories,
-      macros: mockResponse.macros,
-      isUser: true,
-      timestamp: new Date(),
-    };
+      setMessages(prev => [...prev, userMessage]);
 
-    const aiResponse: Message = {
-      id: (Date.now() + 1).toString(),
-      text: `This contains approximately ${mockResponse.calories} calories`,
-      calories: mockResponse.calories,
-      macros: mockResponse.macros,
-      isUser: false,
-      timestamp: new Date(),
-    };
+      // Get nutrition info from Gemini
+      const nutritionInfo = await analyzeFood(text);
 
-    setMessages(prev => [...prev, newMessage, aiResponse]);
-    setTotalCalories(prev => prev + mockResponse.calories);
-    setTotalMacros(prev => ({
-      carbs: prev.carbs + mockResponse.macros.carbs,
-      protein: prev.protein + mockResponse.macros.protein,
-      fats: prev.fats + mockResponse.macros.fats,
-    }));
-    setInputText('');
+      // Create AI response
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        text: `This contains approximately ${nutritionInfo.calories} calories\n\nMacros:\nCarbs: ${nutritionInfo.macros.carbs}g\nProtein: ${nutritionInfo.macros.protein}g\nFats: ${nutritionInfo.macros.fats}g`,
+        calories: nutritionInfo.calories,
+        macros: nutritionInfo.macros,
+        isUser: false,
+        timestamp: new Date(),
+        associatedMessageId: userMessageId,
+      };
+
+      // Update user message with nutrition info
+      const updatedUserMessage: Message = {
+        ...userMessage,
+        calories: nutritionInfo.calories,
+        macros: nutritionInfo.macros,
+      };
+
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.id === userMessageId ? updatedUserMessage : msg
+        ).concat(aiMessage)
+      );
+
+      setTotalCalories(prev => prev + nutritionInfo.calories);
+      setTotalMacros(prev => ({
+        carbs: prev.carbs + nutritionInfo.macros.carbs,
+        protein: prev.protein + nutritionInfo.macros.protein,
+        fats: prev.fats + nutritionInfo.macros.fats,
+      }));
+
+      // Save to storage
+      const today = new Date().toISOString().split('T')[0];
+      const existingData = await storage.getDailyData(today) || {
+        date: today,
+        totalCalories: 0,
+        totalCarbs: 0,
+        totalProtein: 0,
+        totalFats: 0,
+        meals: []
+      };
+
+      existingData.meals.push({
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        food: text,
+        calories: nutritionInfo.calories,
+        macros: nutritionInfo.macros
+      });
+
+      existingData.totalCalories += nutritionInfo.calories;
+      existingData.totalCarbs += nutritionInfo.macros.carbs;
+      existingData.totalProtein += nutritionInfo.macros.protein;
+      existingData.totalFats += nutritionInfo.macros.fats;
+
+      await storage.saveDailyData(today, existingData);
+
+      setInputText('');
+    } catch (error) {
+      Alert.alert(
+        'Error',
+        'Failed to analyze food item. Please try again.',
+        [{ text: 'OK' }]
+      );
+      // Remove the user message if there was an error
+      setMessages(prev => prev.filter(msg => msg.id !== userMessageId));
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   const handleDeleteMessage = useCallback((messageId: string) => {
     setMessages(prev => {
       const messageToDelete = prev.find(m => m.id === messageId);
-      if (messageToDelete && messageToDelete.isUser) {
-        setTotalCalories(prev => prev - messageToDelete.calories);
-        setTotalMacros(prev => ({
-          carbs: prev.carbs - messageToDelete.macros.carbs,
-          protein: prev.protein - messageToDelete.macros.protein,
-          fats: prev.fats - messageToDelete.macros.fats,
-        }));
+      if (!messageToDelete) return prev;
+
+      // Find the associated message (AI response or user message)
+      const associatedMessage = prev.find(m => 
+        m.associatedMessageId === messageId || m.id === messageToDelete.associatedMessageId
+      );
+
+      // Update totals - handle both user and AI messages
+      if (messageToDelete.isUser || (associatedMessage && associatedMessage.isUser)) {
+        const messageToSubtract = messageToDelete.isUser ? messageToDelete : associatedMessage;
+        if (messageToSubtract) {
+          setTotalCalories(prev => Math.max(0, prev - messageToSubtract.calories));
+          setTotalMacros(prev => ({
+            carbs: Math.max(0, prev.carbs - messageToSubtract.macros.carbs),
+            protein: Math.max(0, prev.protein - messageToSubtract.macros.protein),
+            fats: Math.max(0, prev.fats - messageToSubtract.macros.fats),
+          }));
+        }
       }
-      return prev.filter(m => m.id !== messageId);
+
+      // Remove both messages
+      return prev.filter(m => 
+        m.id !== messageId && 
+        m.id !== associatedMessage?.id
+      );
     });
+  }, []);
+
+  useEffect(() => {
+    const loadInitialData = async () => {
+      const today = new Date().toISOString().split('T')[0];
+      const data = await storage.getDailyData(today);
+      if (data) {
+        setTotalCalories(data.totalCalories);
+        setTotalMacros({
+          carbs: data.totalCarbs,
+          protein: data.totalProtein,
+          fats: data.totalFats
+        });
+        // Convert meals to messages
+        const messages = data.meals.flatMap(meal => [
+          {
+            id: Date.now().toString(),
+            text: meal.food,
+            calories: meal.calories,
+            macros: meal.macros,
+            isUser: true,
+            timestamp: new Date(),
+          },
+          {
+            id: (Date.now() + 1).toString(),
+            text: `This contains approximately ${meal.calories} calories\n\nMacros:\nCarbs: ${meal.macros.carbs}g\nProtein: ${meal.macros.protein}g\nFats: ${meal.macros.fats}g`,
+            calories: meal.calories,
+            macros: meal.macros,
+            isUser: false,
+            timestamp: new Date(),
+            associatedMessageId: Date.now().toString(),
+          }
+        ]);
+        setMessages(messages);
+      }
+    };
+    loadInitialData();
   }, []);
 
   return (
@@ -140,11 +247,17 @@ export default function HomeScreen() {
             onChangeText={setInputText}
             placeholder="What did you eat?"
             placeholderTextColor="#666"
+            editable={!isLoading}
           />
           <TouchableOpacity
-            style={styles.sendButton}
-            onPress={() => inputText.trim() && handleSendMessage(inputText.trim())}>
-            <Ionicons name="send" size={24} color="#007AFF" />
+            style={[styles.sendButton, isLoading && styles.sendButtonDisabled]}
+            onPress={() => inputText.trim() && !isLoading && handleSendMessage(inputText.trim())}
+            disabled={isLoading}>
+            <Ionicons 
+              name={isLoading ? "hourglass-outline" : "send"} 
+              size={24} 
+              color={isLoading ? "#666" : "#4CAF50"} 
+            />
           </TouchableOpacity>
         </ThemedView>
       </ThemedView>
@@ -231,5 +344,8 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  sendButtonDisabled: {
+    opacity: 0.5,
   },
 });
