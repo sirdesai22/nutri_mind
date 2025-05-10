@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "NutriMind",
-    "slug": "nutrimind",
+    "slug": "calorie_tracker",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/nutrimind.png",
@@ -17,7 +17,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.sirdesaiexecutive.nutrimind"
+      "package": "com.sirdesaiexecutive.calorie_tracker"
     },
     "web": {
       "bundler": "metro",
