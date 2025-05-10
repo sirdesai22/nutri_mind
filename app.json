@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "calorie_tracker",
-    "slug": "calorie_tracker",
+    "name": "NutriMind",
+    "slug": "nutrimind",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "calorietracker",
+    "icon": "./assets/images/nutrimind.png",
+    "scheme": "nutrimind",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -13,24 +13,23 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/nutrimind.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.sirdesaiexe.calorie_tracker"
+      "package": "com.sirdesaiexecutive.nutrimind"
     },
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/nutrimind.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200,
+          "image": "./assets/images/nutrimind.png",
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }

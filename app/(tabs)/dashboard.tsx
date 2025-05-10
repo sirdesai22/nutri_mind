@@ -1,9 +1,7 @@
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
 import { storage } from '@/utils/storage';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Dimensions, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 
 interface DailyStats {
@@ -34,7 +32,6 @@ export default function DashboardScreen() {
         if (data) {
           setDailyStats(data);
         } else {
-          // Set default data if none exists
           setDailyStats({
             date: dateStr,
             totalCalories: 0,
@@ -57,7 +54,6 @@ export default function DashboardScreen() {
   }, [selectedDate]);
 
   const chartData = useMemo(() => {
-    // Ensure we have valid data for the chart
     if (!weeklyData.length) {
       return {
         labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
@@ -89,31 +85,31 @@ export default function DashboardScreen() {
 
   if (isLoading) {
     return (
-      <ThemedView style={[styles.container, styles.centerContent]}>
-        <ThemedText>Loading...</ThemedText>
-      </ThemedView>
+      <View style={[styles.container, styles.centerContent]}>
+        <Text style={styles.loadingText}>Loading...</Text>
+      </View>
     );
   }
 
   return (
     <ScrollView style={styles.container}>
-      <ThemedView style={styles.header}>
-        <ThemedText type="title" style={styles.headerTitle}>Dashboard</ThemedText>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Dashboard</Text>
         <TouchableOpacity 
           style={styles.dateSelector}
           onPress={() => {
             // TODO: Implement date picker
           }}>
-          <ThemedText style={styles.dateText}>{dailyStats?.date || 'Loading...'}</ThemedText>
+          <Text style={styles.dateText}>{dailyStats?.date || 'Loading...'}</Text>
           <Ionicons name="calendar-outline" size={20} color="#4CAF50" />
         </TouchableOpacity>
-      </ThemedView>
+      </View>
 
       {/* Weekly Calories Graph */}
-      <ThemedView style={styles.graphContainer}>
-        <ThemedText type="subtitle" style={styles.sectionTitle}>
+      <View style={styles.graphContainer}>
+        <Text style={styles.sectionTitle}>
           Weekly Calories
-        </ThemedText>
+        </Text>
         {weeklyData.length > 0 ? (
           <LineChart
             data={chartData}
@@ -125,68 +121,68 @@ export default function DashboardScreen() {
             fromZero
           />
         ) : (
-          <ThemedView style={styles.emptyState}>
-            <ThemedText>No data available for this week</ThemedText>
-          </ThemedView>
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>No data available for this week</Text>
+          </View>
         )}
-      </ThemedView>
+      </View>
 
       {/* Daily Summary */}
-      <ThemedView style={styles.summaryContainer}>
-        <ThemedText type="subtitle" style={styles.sectionTitle}>
+      <View style={styles.summaryContainer}>
+        <Text style={styles.sectionTitle}>
           Daily Summary
-        </ThemedText>
-        <ThemedView style={styles.statsGrid}>
-          <ThemedView style={styles.statItem}>
-            <ThemedText style={styles.statValue}>
+        </Text>
+        <View style={styles.statsGrid}>
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>
               {dailyStats?.totalCalories || 0}
-            </ThemedText>
-            <ThemedText style={styles.statLabel}>Calories</ThemedText>
-          </ThemedView>
-          <ThemedView style={styles.statItem}>
-            <ThemedText style={styles.statValue}>
+            </Text>
+            <Text style={styles.statLabel}>Calories</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>
               {(dailyStats?.totalCarbs || 0).toFixed(1)}g
-            </ThemedText>
-            <ThemedText style={styles.statLabel}>Carbs</ThemedText>
-          </ThemedView>
-          <ThemedView style={styles.statItem}>
-            <ThemedText style={styles.statValue}>
+            </Text>
+            <Text style={styles.statLabel}>Carbs</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>
               {(dailyStats?.totalProtein || 0).toFixed(1)}g
-            </ThemedText>
-            <ThemedText style={styles.statLabel}>Protein</ThemedText>
-          </ThemedView>
-          <ThemedView style={styles.statItem}>
-            <ThemedText style={styles.statValue}>
+            </Text>
+            <Text style={styles.statLabel}>Protein</Text>
+          </View>
+          <View style={styles.statItem}>
+            <Text style={styles.statValue}>
               {(dailyStats?.totalFats || 0).toFixed(1)}g
-            </ThemedText>
-            <ThemedText style={styles.statLabel}>Fats</ThemedText>
-          </ThemedView>
-        </ThemedView>
-      </ThemedView>
+            </Text>
+            <Text style={styles.statLabel}>Fats</Text>
+          </View>
+        </View>
+      </View>
 
       {/* Meal History */}
-      <ThemedView style={styles.mealHistoryContainer}>
-        <ThemedText type="subtitle" style={styles.sectionTitle}>
+      <View style={styles.mealHistoryContainer}>
+        <Text style={styles.sectionTitle}>
           Meal History
-        </ThemedText>
+        </Text>
         {dailyStats?.meals && dailyStats.meals.length > 0 ? (
           dailyStats.meals.map((meal, index) => (
-            <ThemedView key={index} style={styles.mealItem}>
-              <ThemedView style={styles.mealTimeContainer}>
-                <ThemedText style={styles.mealTime}>{meal.time}</ThemedText>
-              </ThemedView>
-              <ThemedView style={styles.mealDetails}>
-                <ThemedText style={styles.mealFood}>{meal.food}</ThemedText>
-                <ThemedText style={styles.mealCalories}>{meal.calories} cal</ThemedText>
-              </ThemedView>
-            </ThemedView>
+            <View key={index} style={styles.mealItem}>
+              <View style={styles.mealTimeContainer}>
+                <Text style={styles.mealTime}>{meal.time}</Text>
+              </View>
+              <View style={styles.mealDetails}>
+                <Text style={styles.mealFood}>{meal.food}</Text>
+                <Text style={styles.mealCalories}>{meal.calories} cal</Text>
+              </View>
+            </View>
           ))
         ) : (
-          <ThemedView style={styles.emptyState}>
-            <ThemedText>No meals recorded for this day</ThemedText>
-          </ThemedView>
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>No meals recorded for this day</Text>
+          </View>
         )}
-      </ThemedView>
+      </View>
     </ScrollView>
   );
 }
@@ -206,6 +202,8 @@ const styles = StyleSheet.create({
     borderBottomColor: '#E0E0E0',
   },
   headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
     color: '#333333',
   },
   dateSelector: {
@@ -254,8 +252,10 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   sectionTitle: {
-    marginBottom: 16,
+    fontSize: 20,
+    fontWeight: '600',
     color: '#333333',
+    marginBottom: 16,
   },
   statsGrid: {
     flexDirection: 'row',
@@ -313,7 +313,6 @@ const styles = StyleSheet.create({
   mealTime: {
     color: '#4CAF50',
     fontWeight: '600',
-    backgroundColor: '#FFFFFF',
   },
   mealDetails: {
     flex: 1,
@@ -336,5 +335,12 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  emptyStateText: {
+    color: '#666666',
+  },
+  loadingText: {
+    color: '#333333',
+    fontSize: 16,
   },
 });

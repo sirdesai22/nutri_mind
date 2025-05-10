@@ -1,7 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { StyleSheet, TextInput, TouchableOpacity } from 'react-native';
-import { ThemedView } from './ThemedView';
+import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 
 interface MessageInputProps {
   onSend: (message: string) => void;
@@ -18,18 +17,26 @@ export function MessageInput({ onSend }: MessageInputProps) {
   };
 
   return (
-    <ThemedView style={styles.container}>
+    <View style={styles.container}>
       <TextInput
         style={styles.input}
         value={message}
         onChangeText={setMessage}
         placeholder="What did you eat?"
-        placeholderTextColor="#666"
+        placeholderTextColor="#666666"
       />
-      <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
-        <Ionicons name="send" size={24} color="#007AFF" />
+      <TouchableOpacity 
+        style={[styles.sendButton, !message.trim() && styles.sendButtonDisabled]} 
+        onPress={handleSend}
+        disabled={!message.trim()}
+      >
+        <Ionicons 
+          name="send" 
+          size={24} 
+          color={!message.trim() ? '#999999' : '#4CAF50'} 
+        />
       </TouchableOpacity>
-    </ThemedView>
+    </View>
   );
 }
 
@@ -38,20 +45,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     padding: 16,
     borderTopWidth: 1,
-    borderTopColor: '#ccc',
+    borderTopColor: '#E0E0E0',
+    backgroundColor: '#FFFFFF',
   },
   input: {
     flex: 1,
-    height: 40,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 20,
+    height: 48,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 24,
     paddingHorizontal: 16,
     marginRight: 8,
+    fontSize: 16,
+    color: '#333333',
   },
   sendButton: {
-    width: 40,
-    height: 40,
+    width: 48,
+    height: 48,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  sendButtonDisabled: {
+    opacity: 0.5,
   },
 }); 

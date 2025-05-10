@@ -1,10 +1,8 @@
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
 import { analyzeFood } from '@/utils/gemini';
 import { storage } from '@/utils/storage';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 interface Message {
   id: string;
@@ -17,7 +15,7 @@ interface Message {
   };
   isUser: boolean;
   timestamp: Date;
-  associatedMessageId?: string; // Reference to the paired message
+  associatedMessageId?: string;
 }
 
 export default function HomeScreen() {
@@ -36,7 +34,6 @@ export default function HomeScreen() {
     try {
       setIsLoading(true);
       
-      // Create user message first
       const userMessage: Message = {
         id: userMessageId,
         text,
@@ -48,10 +45,8 @@ export default function HomeScreen() {
 
       setMessages(prev => [...prev, userMessage]);
 
-      // Get nutrition info from Gemini
       const nutritionInfo = await analyzeFood(text);
 
-      // Create AI response
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         text: `This contains approximately ${nutritionInfo.calories} calories\n\nMacros:\nCarbs: ${nutritionInfo.macros.carbs}g\nProtein: ${nutritionInfo.macros.protein}g\nFats: ${nutritionInfo.macros.fats}g`,
@@ -62,7 +57,6 @@ export default function HomeScreen() {
         associatedMessageId: userMessageId,
       };
 
-      // Update user message with nutrition info
       const updatedUserMessage: Message = {
         ...userMessage,
         calories: nutritionInfo.calories,
@@ -82,7 +76,6 @@ export default function HomeScreen() {
         fats: prev.fats + nutritionInfo.macros.fats,
       }));
 
-      // Save to storage
       const today = new Date().toISOString().split('T')[0];
       const existingData = await storage.getDailyData(today) || {
         date: today,
@@ -114,7 +107,6 @@ export default function HomeScreen() {
         'Failed to analyze food item. Please try again.',
         [{ text: 'OK' }]
       );
-      // Remove the user message if there was an error
       setMessages(prev => prev.filter(msg => msg.id !== userMessageId));
     } finally {
       setIsLoading(false);
@@ -126,12 +118,10 @@ export default function HomeScreen() {
       const messageToDelete = prev.find(m => m.id === messageId);
       if (!messageToDelete) return prev;
 
-      // Find the associated message (AI response or user message)
       const associatedMessage = prev.find(m => 
         m.associatedMessageId === messageId || m.id === messageToDelete.associatedMessageId
       );
 
-      // Update totals - handle both user and AI messages
       if (messageToDelete.isUser || (associatedMessage && associatedMessage.isUser)) {
         const messageToSubtract = messageToDelete.isUser ? messageToDelete : associatedMessage;
         if (messageToSubtract) {
@@ -144,7 +134,6 @@ export default function HomeScreen() {
         }
       }
 
-      // Remove both messages
       return prev.filter(m => 
         m.id !== messageId && 
         m.id !== associatedMessage?.id
@@ -163,7 +152,6 @@ export default function HomeScreen() {
           protein: data.totalProtein,
           fats: data.totalFats
         });
-        // Convert meals to messages
         const messages = data.meals.flatMap(meal => [
           {
             id: Date.now().toString(),
@@ -194,40 +182,40 @@ export default function HomeScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}>
-      <ThemedView style={styles.container}>
+      <View style={styles.container}>
         {/* Nutrition Summary Card */}
-        <ThemedView style={styles.summaryCard}>
-          <ThemedText type="title" style={styles.calories}>
+        <View style={styles.summaryCard}>
+          <Text style={styles.calories}>
             {totalCalories} kcal
-          </ThemedText>
-          <ThemedView style={styles.macrosContainer}>
-            <ThemedView style={styles.macroItem}>
-              <ThemedText type="defaultSemiBold">Carbs</ThemedText>
-              <ThemedText>{totalMacros.carbs}g</ThemedText>
-            </ThemedView>
-            <ThemedView style={styles.macroItem}>
-              <ThemedText type="defaultSemiBold">Protein</ThemedText>
-              <ThemedText>{totalMacros.protein}g</ThemedText>
-            </ThemedView>
-            <ThemedView style={styles.macroItem}>
-              <ThemedText type="defaultSemiBold">Fats</ThemedText>
-              <ThemedText>{totalMacros.fats}g</ThemedText>
-            </ThemedView>
-          </ThemedView>
-        </ThemedView>
+          </Text>
+          <View style={styles.macrosContainer}>
+            <View style={styles.macroItem}>
+              <Text style={styles.macroLabel}>Carbs</Text>
+              <Text style={styles.macroValue}>{totalMacros.carbs}g</Text>
+            </View>
+            <View style={styles.macroItem}>
+              <Text style={styles.macroLabel}>Protein</Text>
+              <Text style={styles.macroValue}>{totalMacros.protein}g</Text>
+            </View>
+            <View style={styles.macroItem}>
+              <Text style={styles.macroLabel}>Fats</Text>
+              <Text style={styles.macroValue}>{totalMacros.fats}g</Text>
+            </View>
+          </View>
+        </View>
 
         {/* Chat Messages */}
         <ScrollView style={styles.messagesContainer}>
           {messages.map(message => (
-            <ThemedView
+            <View
               key={message.id}
               style={[
                 styles.messageContainer,
                 message.isUser ? styles.userMessage : styles.aiMessage,
               ]}>
-              <ThemedText style={message.isUser ? styles.userMessageText : styles.aiMessageText}>
+              <Text style={message.isUser ? styles.userMessageText : styles.aiMessageText}>
                 {message.text}
-              </ThemedText>
+              </Text>
               {message.isUser && (
                 <TouchableOpacity
                   style={styles.deleteButton}
@@ -235,18 +223,18 @@ export default function HomeScreen() {
                   <Ionicons name="trash-outline" size={20} color="#ff4444" />
                 </TouchableOpacity>
               )}
-            </ThemedView>
+            </View>
           ))}
         </ScrollView>
 
         {/* Input Area */}
-        <ThemedView style={styles.inputContainer}>
+        <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
             value={inputText}
             onChangeText={setInputText}
             placeholder="What did you eat?"
-            placeholderTextColor="#666"
+            placeholderTextColor="#666666"
             editable={!isLoading}
           />
           <TouchableOpacity
@@ -256,11 +244,11 @@ export default function HomeScreen() {
             <Ionicons 
               name={isLoading ? "hourglass-outline" : "send"} 
               size={24} 
-              color={isLoading ? "#666" : "#4CAF50"} 
+              color={isLoading ? "#666666" : "#4CAF50"} 
             />
           </TouchableOpacity>
-        </ThemedView>
-      </ThemedView>
+        </View>
+      </View>
     </KeyboardAvoidingView>
   );
 }
@@ -268,12 +256,13 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#F5F5F5',
   },
   summaryCard: {
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-    backgroundColor: '#fff',
+    borderBottomColor: '#E0E0E0',
+    backgroundColor: '#FFFFFF',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -285,6 +274,8 @@ const styles = StyleSheet.create({
   },
   calories: {
     fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333333',
     marginBottom: 8,
   },
   macrosContainer: {
@@ -293,6 +284,16 @@ const styles = StyleSheet.create({
   },
   macroItem: {
     alignItems: 'center',
+  },
+  macroLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333333',
+    marginBottom: 4,
+  },
+  macroValue: {
+    fontSize: 16,
+    color: '#666666',
   },
   messagesContainer: {
     flex: 1,
@@ -307,17 +308,21 @@ const styles = StyleSheet.create({
   },
   userMessage: {
     alignSelf: 'flex-end',
-    backgroundColor: '#007AFF',
+    backgroundColor: '#4CAF50',
   },
   aiMessage: {
     alignSelf: 'flex-start',
-    backgroundColor: '#E9E9EB',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   userMessageText: {
-    color: '#fff',
+    color: '#FFFFFF',
+    fontSize: 16,
   },
   aiMessageText: {
-    color: '#000',
+    color: '#333333',
+    fontSize: 16,
   },
   deleteButton: {
     position: 'absolute',
@@ -328,20 +333,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     padding: 16,
     borderTopWidth: 1,
-    borderTopColor: '#ccc',
-    backgroundColor: '#fff',
+    borderTopColor: '#E0E0E0',
+    backgroundColor: '#FFFFFF',
   },
   input: {
     flex: 1,
-    height: 40,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 20,
+    height: 48,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 24,
     paddingHorizontal: 16,
     marginRight: 8,
+    fontSize: 16,
+    color: '#333333',
   },
   sendButton: {
-    width: 40,
-    height: 40,
+    width: 48,
+    height: 48,
     justifyContent: 'center',
     alignItems: 'center',
   },

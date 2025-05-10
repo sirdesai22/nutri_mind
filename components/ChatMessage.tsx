@@ -1,8 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { StyleSheet, TouchableOpacity } from 'react-native';
-import { ThemedText } from './ThemedText';
-import { ThemedView } from './ThemedView';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface Message {
   id: string;
@@ -24,18 +22,18 @@ interface ChatMessageProps {
 
 export function ChatMessage({ message, onDelete }: ChatMessageProps) {
   return (
-    <ThemedView
+    <View
       style={[
         styles.container,
         message.isUser ? styles.userMessage : styles.aiMessage,
       ]}>
-      <ThemedText>{message.text}</ThemedText>
+      <Text style={styles.messageText}>{message.text}</Text>
       {message.isUser && (
         <TouchableOpacity style={styles.deleteButton} onPress={onDelete}>
           <Ionicons name="trash-outline" size={20} color="#ff4444" />
         </TouchableOpacity>
       )}
-    </ThemedView>
+    </View>
   );
 }
 
@@ -48,11 +46,17 @@ const styles = StyleSheet.create({
   },
   userMessage: {
     alignSelf: 'flex-end',
-    backgroundColor: '#007AFF',
+    backgroundColor: '#4CAF50',
   },
   aiMessage: {
     alignSelf: 'flex-start',
-    backgroundColor: '#E9E9EB',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  messageText: {
+    fontSize: 16,
+    color: '#333333',
   },
   deleteButton: {
     position: 'absolute',
