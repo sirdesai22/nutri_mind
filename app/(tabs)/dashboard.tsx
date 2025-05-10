@@ -1,7 +1,8 @@
 import { storage } from '@/utils/storage';
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Dimensions, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 
 interface DailyStats {
@@ -19,9 +20,14 @@ interface DailyStats {
 
 export default function DashboardScreen() {
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [dailyStats, setDailyStats] = useState<DailyStats | null>(null);
   const [weeklyData, setWeeklyData] = useState<DailyStats[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    Alert.alert('Hello', 'World');
+  },[])
 
   useEffect(() => {
     const loadData = async () => {
@@ -83,6 +89,21 @@ export default function DashboardScreen() {
     }
   };
 
+  const handleDateChange = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(false);
+    if (selectedDate) {
+      setSelectedDate(selectedDate);
+    }
+  };
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
   if (isLoading) {
     return (
       <View style={[styles.container, styles.centerContent]}>
@@ -97,13 +118,21 @@ export default function DashboardScreen() {
         <Text style={styles.headerTitle}>Dashboard</Text>
         <TouchableOpacity 
           style={styles.dateSelector}
-          onPress={() => {
-            // TODO: Implement date picker
-          }}>
-          <Text style={styles.dateText}>{dailyStats?.date || 'Loading...'}</Text>
+          onPress={() => setShowDatePicker(true)}>
+          <Text style={styles.dateText}>{formatDate(selectedDate)}</Text>
           <Ionicons name="calendar-outline" size={20} color="#4CAF50" />
         </TouchableOpacity>
       </View>
+
+      {showDatePicker && (
+        <DateTimePicker
+          value={selectedDate}
+          mode="date"
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          onChange={handleDateChange}
+          maximumDate={new Date()}
+        />
+      )}
 
       {/* Weekly Calories Graph */}
       <View style={styles.graphContainer}>
@@ -191,6 +220,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F5F5',
+    paddingTop: 16,
   },
   header: {
     flexDirection: 'row',

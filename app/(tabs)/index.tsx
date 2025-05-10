@@ -257,6 +257,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F5F5',
+    paddingTop: 10,
   },
   summaryCard: {
     padding: 16,
