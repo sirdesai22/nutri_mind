@@ -25,9 +25,9 @@ export default function DashboardScreen() {
   const [weeklyData, setWeeklyData] = useState<DailyStats[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    Alert.alert('Hello', 'World');
-  },[])
+  // useEffect(() => {
+  //   Alert.alert('Hello', 'World');
+  // },[])
 
   useEffect(() => {
     const loadData = async () => {
