@@ -1,6 +1,7 @@
 import { storage } from '@/utils/storage';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Dimensions, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
@@ -24,40 +25,55 @@ export default function DashboardScreen() {
   const [dailyStats, setDailyStats] = useState<DailyStats | null>(null);
   const [weeklyData, setWeeklyData] = useState<DailyStats[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const navigation = useNavigation();
 
-  // useEffect(() => {
-  //   Alert.alert('Hello', 'World');
-  // },[])
-
-  useEffect(() => {
-    const loadData = async () => {
-      setIsLoading(true);
-      try {
-        const dateStr = selectedDate.toISOString().split('T')[0];
-        const data = await storage.getDailyData(dateStr);
-        if (data) {
-          setDailyStats(data);
-        } else {
-          setDailyStats({
-            date: dateStr,
-            totalCalories: 0,
-            totalCarbs: 0,
-            totalProtein: 0,
-            totalFats: 0,
-            meals: []
-          });
-        }
-
-        const weekly = await storage.getWeeklyData();
-        setWeeklyData(weekly);
-      } catch (error) {
-        console.error('Error loading data:', error);
-      } finally {
-        setIsLoading(false);
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      const dateStr = selectedDate.toISOString().split('T')[0];
+      const data = await storage.getDailyData(dateStr);
+      if (data) {
+        setDailyStats(data);
+      } else {
+        setDailyStats({
+          date: dateStr,
+          totalCalories: 0,
+          totalCarbs: 0,
+          totalProtein: 0,
+          totalFats: 0,
+          meals: []
+        });
       }
-    };
+
+      const weekly = await storage.getWeeklyData();
+      setWeeklyData(weekly);
+    } catch (error) {
+      console.error('Error loading data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Load data when component mounts
+  useEffect(() => {
     loadData();
-  }, [selectedDate]);
+
+    // Subscribe to navigation state changes
+    const unsubscribe = navigation.addListener('state', () => {
+      loadData();
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  // Refresh data when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      loadData();
+    }, [selectedDate])
+  );
 
   const chartData = useMemo(() => {
     if (!weeklyData.length) {
@@ -104,6 +120,39 @@ export default function DashboardScreen() {
     });
   };
 
+  const handleResetToday = async () => {
+    Alert.alert(
+      'Reset All Data',
+      'Are you sure you want to reset ALL data? This will clear everything and cannot be undone.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel'
+        },
+        {
+          text: 'Reset All',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // Clear all data in storage
+              await storage.clearAllData();
+              // Reset the selected date to today
+              setSelectedDate(new Date());
+              // Reload the data
+              loadData();
+            } catch (error) {
+              Alert.alert(
+                'Error',
+                'Failed to reset data. Please try again.',
+                [{ text: 'OK' }]
+              );
+            }
+          }
+        }
+      ]
+    );
+  };
+
   if (isLoading) {
     return (
       <View style={[styles.container, styles.centerContent]}>
@@ -116,12 +165,19 @@ export default function DashboardScreen() {
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Dashboard</Text>
-        <TouchableOpacity 
-          style={styles.dateSelector}
-          onPress={() => setShowDatePicker(true)}>
-          <Text style={styles.dateText}>{formatDate(selectedDate)}</Text>
-          <Ionicons name="calendar-outline" size={20} color="#4CAF50" />
-        </TouchableOpacity>
+        <View style={styles.headerControls}>
+          <TouchableOpacity 
+            style={styles.resetButton}
+            onPress={handleResetToday}>
+            <Ionicons name="refresh-outline" size={20} color="#ff4444" />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.dateSelector}
+            onPress={() => setShowDatePicker(true)}>
+            <Text style={styles.dateText}>{formatDate(selectedDate)}</Text>
+            <Ionicons name="calendar-outline" size={20} color="#4CAF50" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {showDatePicker && (
@@ -220,7 +276,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F5F5',
-    paddingTop: 16,
   },
   header: {
     flexDirection: 'row',
@@ -235,6 +290,18 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#333333',
+  },
+  headerControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  resetButton: {
+    padding: 8,
+    backgroundColor: '#FFF5F5',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ff4444',
   },
   dateSelector: {
     flexDirection: 'row',

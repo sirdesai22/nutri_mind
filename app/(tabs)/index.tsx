@@ -1,6 +1,7 @@
 import { analyzeFood } from '@/utils/gemini';
 import { storage } from '@/utils/storage';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
@@ -29,8 +30,70 @@ export default function HomeScreen() {
   });
   const [isLoading, setIsLoading] = useState(false);
 
+  const resetState = () => {
+    setMessages([]);
+    setTotalCalories(0);
+    setTotalMacros({
+      carbs: 0,
+      protein: 0,
+      fats: 0,
+    });
+  };
+
+  // Load initial data when component mounts
+  useEffect(() => {
+    loadInitialData();
+  }, []);
+
+  // Reset state when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      const checkAndResetData = async () => {
+        const today = new Date().toISOString().split('T')[0];
+        const data = await storage.getDailyData(today);
+        if (!data) {
+          resetState();
+        }
+      };
+      checkAndResetData();
+    }, [])
+  );
+
+  const loadInitialData = async () => {
+    const today = new Date().toISOString().split('T')[0];
+    const data = await storage.getDailyData(today);
+    if (data) {
+      setTotalCalories(data.totalCalories);
+      setTotalMacros({
+        carbs: data.totalCarbs,
+        protein: data.totalProtein,
+        fats: data.totalFats
+      });
+      const messages = data.meals.flatMap(meal => [
+        {
+          id: Date.now().toString(),
+          text: meal.food,
+          calories: meal.calories,
+          macros: meal.macros,
+          isUser: true,
+          timestamp: new Date(),
+        },
+        {
+          id: (Date.now() + 1).toString(),
+          text: `This contains approximately ${meal.calories} calories\n\nMacros:\nCarbs: ${meal.macros.carbs}g\nProtein: ${meal.macros.protein}g\nFats: ${meal.macros.fats}g`,
+          calories: meal.calories,
+          macros: meal.macros,
+          isUser: false,
+          timestamp: new Date(),
+          associatedMessageId: Date.now().toString(),
+        }
+      ]);
+      setMessages(messages);
+    }
+  };
+
   const handleSendMessage = useCallback(async (text: string) => {
-    const userMessageId = Date.now().toString();
+    const userMessageId = `${Date.now()}-${new Date().getSeconds()}`;
     try {
       setIsLoading(true);
       
@@ -48,7 +111,7 @@ export default function HomeScreen() {
       const nutritionInfo = await analyzeFood(text);
 
       const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
+        id: `${Date.now()}-${new Date().getSeconds()}`,
         text: `This contains approximately ${nutritionInfo.calories} calories\n\nMacros:\nCarbs: ${nutritionInfo.macros.carbs}g\nProtein: ${nutritionInfo.macros.protein}g\nFats: ${nutritionInfo.macros.fats}g`,
         calories: nutritionInfo.calories,
         macros: nutritionInfo.macros,
@@ -134,47 +197,43 @@ export default function HomeScreen() {
         }
       }
 
-      return prev.filter(m => 
+      const updatedMessages = prev.filter(m => 
         m.id !== messageId && 
         m.id !== associatedMessage?.id
       );
-    });
-  }, []);
 
-  useEffect(() => {
-    const loadInitialData = async () => {
+      // Update storage with the new state
       const today = new Date().toISOString().split('T')[0];
-      const data = await storage.getDailyData(today);
-      if (data) {
-        setTotalCalories(data.totalCalories);
-        setTotalMacros({
-          carbs: data.totalCarbs,
-          protein: data.totalProtein,
-          fats: data.totalFats
-        });
-        const messages = data.meals.flatMap(meal => [
-          {
-            id: Date.now().toString(),
-            text: meal.food,
-            calories: meal.calories,
-            macros: meal.macros,
-            isUser: true,
-            timestamp: new Date(),
-          },
-          {
-            id: (Date.now() + 1).toString(),
-            text: `This contains approximately ${meal.calories} calories\n\nMacros:\nCarbs: ${meal.macros.carbs}g\nProtein: ${meal.macros.protein}g\nFats: ${meal.macros.fats}g`,
-            calories: meal.calories,
-            macros: meal.macros,
-            isUser: false,
-            timestamp: new Date(),
-            associatedMessageId: Date.now().toString(),
-          }
-        ]);
-        setMessages(messages);
-      }
-    };
-    loadInitialData();
+      const updatedMeals = updatedMessages
+        .filter(m => m.isUser)
+        .map(m => ({
+          time: m.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          food: m.text,
+          calories: m.calories,
+          macros: m.macros
+        }));
+
+      const totalCal = updatedMessages.reduce((sum, m) => sum + (m.isUser ? m.calories : 0), 0);
+      const totalMac = updatedMessages.reduce((acc, m) => {
+        if (m.isUser) {
+          acc.carbs += m.macros.carbs;
+          acc.protein += m.macros.protein;
+          acc.fats += m.macros.fats;
+        }
+        return acc;
+      }, { carbs: 0, protein: 0, fats: 0 });
+
+      storage.saveDailyData(today, {
+        date: today,
+        totalCalories: totalCal,
+        totalCarbs: totalMac.carbs,
+        totalProtein: totalMac.protein,
+        totalFats: totalMac.fats,
+        meals: updatedMeals
+      });
+
+      return updatedMessages;
+    });
   }, []);
 
   return (
@@ -191,15 +250,15 @@ export default function HomeScreen() {
           <View style={styles.macrosContainer}>
             <View style={styles.macroItem}>
               <Text style={styles.macroLabel}>Carbs</Text>
-              <Text style={styles.macroValue}>{totalMacros.carbs}g</Text>
+              <Text style={styles.macroValue}>{Math.round(totalMacros.carbs)}g</Text>
             </View>
             <View style={styles.macroItem}>
               <Text style={styles.macroLabel}>Protein</Text>
-              <Text style={styles.macroValue}>{totalMacros.protein}g</Text>
+              <Text style={styles.macroValue}>{Math.round(totalMacros.protein)}g</Text>
             </View>
             <View style={styles.macroItem}>
               <Text style={styles.macroLabel}>Fats</Text>
-              <Text style={styles.macroValue}>{totalMacros.fats}g</Text>
+              <Text style={styles.macroValue}>{Math.round(totalMacros.fats)}g</Text>
             </View>
           </View>
         </View>
@@ -257,7 +316,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F5F5',
-    paddingTop: 10,
   },
   summaryCard: {
     padding: 16,

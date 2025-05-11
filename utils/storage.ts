@@ -84,5 +84,14 @@ export const storage = {
       console.error('Error getting weekly data:', error);
       return [];
     }
+  },
+
+  async clearAllData(): Promise<void> {
+    try {
+      await AsyncStorage.removeItem(STORAGE_KEY);
+    } catch (error) {
+      console.error('Error clearing data:', error);
+      throw error;
+    }
   }
 }; 
