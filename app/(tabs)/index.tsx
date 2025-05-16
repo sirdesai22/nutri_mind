@@ -126,12 +126,14 @@ export default function HomeScreen() {
         macros: nutritionInfo.macros,
       };
 
+      // Update messages first
       setMessages(prev => 
         prev.map(msg => 
           msg.id === userMessageId ? updatedUserMessage : msg
         ).concat(aiMessage)
       );
 
+      // Update totals
       setTotalCalories(prev => prev + nutritionInfo.calories);
       setTotalMacros(prev => ({
         carbs: prev.carbs + nutritionInfo.macros.carbs,
@@ -139,32 +141,39 @@ export default function HomeScreen() {
         fats: prev.fats + nutritionInfo.macros.fats,
       }));
 
-      const today = new Date().toISOString().split('T')[0];
-      const existingData = await storage.getDailyData(today) || {
-        date: today,
-        totalCalories: 0,
-        totalCarbs: 0,
-        totalProtein: 0,
-        totalFats: 0,
-        meals: []
-      };
+      // Save to storage
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const existingData = await storage.getDailyData(today) || {
+          date: today,
+          totalCalories: 0,
+          totalCarbs: 0,
+          totalProtein: 0,
+          totalFats: 0,
+          meals: []
+        };
 
-      existingData.meals.push({
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        food: text,
-        calories: nutritionInfo.calories,
-        macros: nutritionInfo.macros
-      });
+        existingData.meals.push({
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          food: text,
+          calories: nutritionInfo.calories,
+          macros: nutritionInfo.macros
+        });
 
-      existingData.totalCalories += nutritionInfo.calories;
-      existingData.totalCarbs += nutritionInfo.macros.carbs;
-      existingData.totalProtein += nutritionInfo.macros.protein;
-      existingData.totalFats += nutritionInfo.macros.fats;
+        existingData.totalCalories += nutritionInfo.calories;
+        existingData.totalCarbs += nutritionInfo.macros.carbs;
+        existingData.totalProtein += nutritionInfo.macros.protein;
+        existingData.totalFats += nutritionInfo.macros.fats;
 
-      await storage.saveDailyData(today, existingData);
+        await storage.saveDailyData(today, existingData);
+      } catch (storageError) {
+        console.error('Error saving to storage:', storageError);
+        // Don't show error to user for storage issues
+      }
 
       setInputText('');
     } catch (error) {
+      console.error('Error in handleSendMessage:', error);
       Alert.alert(
         'Error',
         'Failed to analyze food item. Please try again.',
@@ -177,63 +186,75 @@ export default function HomeScreen() {
   }, []);
 
   const handleDeleteMessage = useCallback((messageId: string) => {
-    setMessages(prev => {
-      const messageToDelete = prev.find(m => m.id === messageId);
-      if (!messageToDelete) return prev;
+    try {
+      setMessages(prev => {
+        const messageToDelete = prev.find(m => m.id === messageId);
+        if (!messageToDelete) return prev;
 
-      const associatedMessage = prev.find(m => 
-        m.associatedMessageId === messageId || m.id === messageToDelete.associatedMessageId
-      );
+        const associatedMessage = prev.find(m => 
+          m.associatedMessageId === messageId || m.id === messageToDelete.associatedMessageId
+        );
 
-      if (messageToDelete.isUser || (associatedMessage && associatedMessage.isUser)) {
-        const messageToSubtract = messageToDelete.isUser ? messageToDelete : associatedMessage;
-        if (messageToSubtract) {
-          setTotalCalories(prev => Math.max(0, prev - messageToSubtract.calories));
-          setTotalMacros(prev => ({
-            carbs: Math.max(0, prev.carbs - messageToSubtract.macros.carbs),
-            protein: Math.max(0, prev.protein - messageToSubtract.macros.protein),
-            fats: Math.max(0, prev.fats - messageToSubtract.macros.fats),
+        if (messageToDelete.isUser || (associatedMessage && associatedMessage.isUser)) {
+          const messageToSubtract = messageToDelete.isUser ? messageToDelete : associatedMessage;
+          if (messageToSubtract) {
+            setTotalCalories(prev => Math.max(0, prev - messageToSubtract.calories));
+            setTotalMacros(prev => ({
+              carbs: Math.max(0, prev.carbs - messageToSubtract.macros.carbs),
+              protein: Math.max(0, prev.protein - messageToSubtract.macros.protein),
+              fats: Math.max(0, prev.fats - messageToSubtract.macros.fats),
+            }));
+          }
+        }
+
+        const updatedMessages = prev.filter(m => 
+          m.id !== messageId && 
+          m.id !== associatedMessage?.id
+        );
+
+        // Update storage with the new state
+        const today = new Date().toISOString().split('T')[0];
+        const updatedMeals = updatedMessages
+          .filter(m => m.isUser)
+          .map(m => ({
+            time: m.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            food: m.text,
+            calories: m.calories,
+            macros: m.macros
           }));
-        }
-      }
 
-      const updatedMessages = prev.filter(m => 
-        m.id !== messageId && 
-        m.id !== associatedMessage?.id
-      );
+        const totalCal = updatedMessages.reduce((sum, m) => sum + (m.isUser ? m.calories : 0), 0);
+        const totalMac = updatedMessages.reduce((acc, m) => {
+          if (m.isUser) {
+            acc.carbs += m.macros.carbs;
+            acc.protein += m.macros.protein;
+            acc.fats += m.macros.fats;
+          }
+          return acc;
+        }, { carbs: 0, protein: 0, fats: 0 });
 
-      // Update storage with the new state
-      const today = new Date().toISOString().split('T')[0];
-      const updatedMeals = updatedMessages
-        .filter(m => m.isUser)
-        .map(m => ({
-          time: m.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          food: m.text,
-          calories: m.calories,
-          macros: m.macros
-        }));
+        // Save to storage in the background
+        storage.saveDailyData(today, {
+          date: today,
+          totalCalories: totalCal,
+          totalCarbs: totalMac.carbs,
+          totalProtein: totalMac.protein,
+          totalFats: totalMac.fats,
+          meals: updatedMeals
+        }).catch(error => {
+          console.error('Error saving to storage:', error);
+        });
 
-      const totalCal = updatedMessages.reduce((sum, m) => sum + (m.isUser ? m.calories : 0), 0);
-      const totalMac = updatedMessages.reduce((acc, m) => {
-        if (m.isUser) {
-          acc.carbs += m.macros.carbs;
-          acc.protein += m.macros.protein;
-          acc.fats += m.macros.fats;
-        }
-        return acc;
-      }, { carbs: 0, protein: 0, fats: 0 });
-
-      storage.saveDailyData(today, {
-        date: today,
-        totalCalories: totalCal,
-        totalCarbs: totalMac.carbs,
-        totalProtein: totalMac.protein,
-        totalFats: totalMac.fats,
-        meals: updatedMeals
+        return updatedMessages;
       });
-
-      return updatedMessages;
-    });
+    } catch (error) {
+      console.error('Error in handleDeleteMessage:', error);
+      Alert.alert(
+        'Error',
+        'Failed to delete message. Please try again.',
+        [{ text: 'OK' }]
+      );
+    }
   }, []);
 
   return (

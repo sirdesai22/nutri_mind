@@ -27,69 +27,74 @@ export default function DashboardScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const navigation = useNavigation();
 
-  const loadData = async () => {
-    setIsLoading(true);
-    try {
-      const dateStr = selectedDate.toISOString().split('T')[0];
-      const data = await storage.getDailyData(dateStr);
-      if (data) {
-        setDailyStats(data);
-      } else {
-        setDailyStats({
-          date: dateStr,
-          totalCalories: 0,
-          totalCarbs: 0,
-          totalProtein: 0,
-          totalFats: 0,
-          meals: []
-        });
-      }
+  // const loadData = async () => {
+  //   setIsLoading(true);
+  //   try {
+  //     const dateStr = selectedDate.toISOString().split('T')[0];
+  //     const data = await storage.getDailyData(dateStr);
+  //     if (data) {
+  //       setDailyStats(data);
+  //     } else {
+  //       setDailyStats({
+  //         date: dateStr,
+  //         totalCalories: 0,
+  //         totalCarbs: 0,
+  //         totalProtein: 0,
+  //         totalFats: 0,
+  //         meals: []
+  //       });
+  //     }
 
-      const weekly = await storage.getWeeklyData();
-      setWeeklyData(weekly);
-    } catch (error) {
-      console.error('Error loading data:', error);
-    } finally {
-      setIsLoading(false);
-    }
+  //     const weekly = await storage.getWeeklyData();
+  //     setWeeklyData(weekly);
+  //   } catch (error) {
+  //     console.error('Error loading data:', error);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
+  // // Load data when component mounts
+  // useEffect(() => {
+  //   loadData();
+
+  //   // Subscribe to navigation state changes
+  //   const unsubscribe = navigation.addListener('state', () => {
+  //     loadData();
+  //   });
+
+  //   return () => {
+  //     unsubscribe();
+  //   };
+  // }, []);
+
+  // // Refresh data when screen comes into focus
+  // useFocusEffect(
+  //   React.useCallback(() => {
+  //     loadData();
+  //   }, [selectedDate])
+  // );
+
+  //dummy data for chart
+  const chartData = {
+    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    datasets: [{ data: [0, 0, 0, 0, 0, 0, 0] }]
   };
+  // const chartData = useMemo(() => {
+  //   if (!weeklyData.length) {
+  //     return {
+  //       labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+  //       datasets: [{ data: [0, 0, 0, 0, 0, 0, 0] }]
+  //     };
+  //   }
 
-  // Load data when component mounts
-  useEffect(() => {
-    loadData();
-
-    // Subscribe to navigation state changes
-    const unsubscribe = navigation.addListener('state', () => {
-      loadData();
-    });
-
-    return () => {
-      unsubscribe();
-    };
-  }, []);
-
-  // Refresh data when screen comes into focus
-  useFocusEffect(
-    React.useCallback(() => {
-      loadData();
-    }, [selectedDate])
-  );
-
-  const chartData = useMemo(() => {
-    if (!weeklyData.length) {
-      return {
-        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-        datasets: [{ data: [0, 0, 0, 0, 0, 0, 0] }]
-      };
-    }
-
-    return {
-      labels: weeklyData.map(d => new Date(d.date).toLocaleDateString('en-US', { weekday: 'short' })),
-      datasets: [{
-        data: weeklyData.map(d => d.totalCalories || 0)
-      }]
-    };
-  }, [weeklyData]);
+  //   return {
+  //     labels: weeklyData.map(d => new Date(d.date).toLocaleDateString('en-US', { weekday: 'short' })),
+  //     datasets: [{
+  //       data: weeklyData.map(d => d.totalCalories || 0)
+  //     }]
+  //   };
+  // }, [weeklyData]);
 
   const chartConfig = {
     backgroundGradientFrom: '#FFFFFF',
@@ -121,48 +126,50 @@ export default function DashboardScreen() {
   };
 
   const handleResetToday = async () => {
-    Alert.alert(
-      'Reset All Data',
-      'Are you sure you want to reset ALL data? This will clear everything and cannot be undone.',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel'
-        },
-        {
-          text: 'Reset All',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              // Clear all data in storage
-              await storage.clearAllData();
-              // Reset the selected date to today
-              setSelectedDate(new Date());
-              // Reload the data
-              loadData();
-            } catch (error) {
-              Alert.alert(
-                'Error',
-                'Failed to reset data. Please try again.',
-                [{ text: 'OK' }]
-              );
-            }
-          }
-        }
-      ]
-    );
+    Alert.alert('Data reset!');
+    // Alert.alert(
+    //   'Reset All Data',
+    //   'Are you sure you want to reset ALL data? This will clear everything and cannot be undone.',
+    //   [
+    //     {
+    //       text: 'Cancel',
+    //       style: 'cancel'
+    //     },
+    //     {
+    //       text: 'Reset All',
+    //       style: 'destructive',
+    //       onPress: async () => {
+    //         try {
+    //           // Clear all data in storage
+    //           await storage.clearAllData();
+    //           // Reset the selected date to today
+    //           setSelectedDate(new Date());
+    //           // Reload the data
+    //           loadData();
+    //         } catch (error) {
+    //           Alert.alert(
+    //             'Error',
+    //             'Failed to reset data. Please try again.',
+    //             [{ text: 'OK' }]
+    //           );
+    //         }
+    //       }
+    //     }
+    //   ]
+    // );
   };
 
-  if (isLoading) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <Text style={styles.loadingText}>Loading...</Text>
-      </View>
-    );
-  }
+  // if (isLoading) {
+  //   return (
+  //     <View style={[styles.container, styles.centerContent]}>
+  //       <Text style={styles.loadingText}>Loading...</Text>
+  //     </View>
+  //   );
+  // }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container}>\
+    <Text>Hello From Dashboard</Text>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Dashboard</Text>
         <View style={styles.headerControls}>
