@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Alert } from 'react-native';
 
 export interface DailyData {
   date: string;
@@ -24,10 +25,13 @@ export const storage = {
   async saveDailyData(date: string, data: DailyData) {
     try {
       const existingData = await this.getAllData();
-      existingData[date] = data;
+      if (existingData[date] || date === new Date().toISOString().split('T')[0]) {
+        existingData[date] = data;
+      }
       await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(existingData));
     } catch (error) {
       console.error('Error saving data:', error);
+      Alert.alert('Error saving data in saveDailyData');
     }
   },
 
@@ -41,6 +45,7 @@ export const storage = {
       return null;
     } catch (error) {
       console.error('Error getting data:', error);
+      Alert.alert('Error getting data in getDailyData');
       return null;
     }
   },
@@ -51,6 +56,7 @@ export const storage = {
       return data ? JSON.parse(data) : {};
     } catch (error) {
       console.error('Error getting all data:', error);
+      Alert.alert('Error getting all data in getAllData');
       return {};
     }
   },
@@ -82,6 +88,7 @@ export const storage = {
       return weeklyData;
     } catch (error) {
       console.error('Error getting weekly data:', error);
+      Alert.alert('Error getting weekly data in getWeeklyData');
       return [];
     }
   },
@@ -91,6 +98,7 @@ export const storage = {
       await AsyncStorage.removeItem(STORAGE_KEY);
     } catch (error) {
       console.error('Error clearing data:', error);
+      Alert.alert('Error clearing data in clearAllData');
       throw error;
     }
   }
