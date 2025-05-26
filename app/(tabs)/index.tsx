@@ -93,7 +93,7 @@ export default function HomeScreen() {
   };
 
   const handleSendMessage = useCallback(async (text: string) => {
-    const userMessageId = `${Date.now()}-${new Date().getSeconds()}`;
+    const userMessageId = `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     try {
       setIsLoading(true);
       
@@ -106,12 +106,18 @@ export default function HomeScreen() {
         timestamp: new Date(),
       };
 
+      // Add user message first
       setMessages(prev => [...prev, userMessage]);
 
       const nutritionInfo = await analyzeFood(text);
+      
+      if (!nutritionInfo || !nutritionInfo.calories || !nutritionInfo.macros) {
+        throw new Error('Invalid nutrition information received');
+      }
 
+      const aiMessageId = `ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       const aiMessage: Message = {
-        id: `${Date.now()}-${new Date().getSeconds()}`,
+        id: aiMessageId,
         text: `This contains approximately ${nutritionInfo.calories} calories\n\nMacros:\nCarbs: ${nutritionInfo.macros.carbs}g\nProtein: ${nutritionInfo.macros.protein}g\nFats: ${nutritionInfo.macros.fats}g`,
         calories: nutritionInfo.calories,
         macros: nutritionInfo.macros,
@@ -126,7 +132,7 @@ export default function HomeScreen() {
         macros: nutritionInfo.macros,
       };
 
-      // Update messages first
+      // Update messages with both user and AI messages
       setMessages(prev => 
         prev.map(msg => 
           msg.id === userMessageId ? updatedUserMessage : msg
@@ -142,35 +148,37 @@ export default function HomeScreen() {
       }));
 
       // Save to storage
-      try {
-        const today = new Date().toISOString().split('T')[0];
-        const existingData = await storage.getDailyData(today) || {
-          date: today,
-          totalCalories: 0,
-          totalCarbs: 0,
-          totalProtein: 0,
-          totalFats: 0,
-          meals: []
-        };
+      const today = new Date().toISOString().split('T')[0];
+      const existingData = await storage.getDailyData(today) || {
+        date: today,
+        totalCalories: 0,
+        totalCarbs: 0,
+        totalProtein: 0,
+        totalFats: 0,
+        meals: []
+      };
+      console.log('existingData', existingData);
 
-        existingData.meals.push({
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          food: text,
-          calories: nutritionInfo.calories,
-          macros: nutritionInfo.macros
-        });
+      const newMeal = {
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        food: text,
+        calories: nutritionInfo.calories,
+        macros: nutritionInfo.macros
+      };
 
-        existingData.totalCalories += nutritionInfo.calories;
-        existingData.totalCarbs += nutritionInfo.macros.carbs;
-        existingData.totalProtein += nutritionInfo.macros.protein;
-        existingData.totalFats += nutritionInfo.macros.fats;
+      console.log('newMeal', newMeal);
 
-        await storage.saveDailyData(today, existingData);
-      } catch (storageError) {
-        console.error('Error saving to storage:', storageError);
-        // Don't show error to user for storage issues
-      }
+      const updatedData = {
+        ...existingData,
+        meals: [...existingData.meals, newMeal],
+        totalCalories: existingData.totalCalories + nutritionInfo.calories,
+        totalCarbs: existingData.totalCarbs + nutritionInfo.macros.carbs,
+        totalProtein: existingData.totalProtein + nutritionInfo.macros.protein,
+        totalFats: existingData.totalFats + nutritionInfo.macros.fats
+      };
+      console.log('updatedData', updatedData);
 
+      await storage.saveDailyData(today, updatedData);
       setInputText('');
     } catch (error) {
       console.error('Error in handleSendMessage:', error);
@@ -179,6 +187,7 @@ export default function HomeScreen() {
         'Failed to analyze food item. Please try again.',
         [{ text: 'OK' }]
       );
+      // Remove the user message if it was added
       setMessages(prev => prev.filter(msg => msg.id !== userMessageId));
     } finally {
       setIsLoading(false);
@@ -286,9 +295,9 @@ export default function HomeScreen() {
 
         {/* Chat Messages */}
         <ScrollView style={styles.messagesContainer}>
-          {messages.map(message => (
+          {messages.map((message, index) => (
             <View
-              key={message.id}
+              key={index}
               style={[
                 styles.messageContainer,
                 message.isUser ? styles.userMessage : styles.aiMessage,

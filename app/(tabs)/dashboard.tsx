@@ -30,10 +30,33 @@ export default function DashboardScreen() {
     setIsLoading(true);
     try {
       const dateStr = selectedDate.toISOString().split('T')[0];
+      console.log('[Dashboard] Loading data for date:', dateStr);
+      
       const data = await storage.getDailyData(dateStr);
+      console.log('[Dashboard] Retrieved data:', JSON.stringify(data, null, 2));
+      
       if (data) {
-        setDailyStats(data);
+        // Ensure all required fields exist with default values
+        const safeData = {
+          date: data.date || dateStr,
+          totalCalories: data.totalCalories || 0,
+          totalCarbs: data.totalCarbs || 0,
+          totalProtein: data.totalProtein || 0,
+          totalFats: data.totalFats || 0,
+          meals: Array.isArray(data.meals) ? data.meals.map(meal => ({
+            time: meal.time || '',
+            food: meal.food || '',
+            calories: meal.calories || 0,
+            macros: {
+              carbs: meal.macros?.carbs || 0,
+              protein: meal.macros?.protein || 0,
+              fats: meal.macros?.fats || 0
+            }
+          })) : []
+        };
+        setDailyStats(safeData);
       } else {
+        console.log('[Dashboard] No data found, setting default values');
         setDailyStats({
           date: dateStr,
           totalCalories: 0,
@@ -45,9 +68,27 @@ export default function DashboardScreen() {
       }
 
       const weekly = await storage.getWeeklyData();
-      setWeeklyData(weekly);
+      console.log('[Dashboard] Retrieved weekly data:', JSON.stringify(weekly, null, 2));
+      
+      // Ensure weekly data is an array
+      if (Array.isArray(weekly)) {
+        setWeeklyData(weekly);
+      } else {
+        console.log('[Dashboard] Invalid weekly data format, setting empty array');
+        setWeeklyData([]);
+      }
     } catch (error) {
-      console.error('Error loading data:', error);
+      console.error('[Dashboard] Error loading data:', error);
+      // Set default values on error
+      setDailyStats({
+        date: selectedDate.toISOString().split('T')[0],
+        totalCalories: 0,
+        totalCarbs: 0,
+        totalProtein: 0,
+        totalFats: 0,
+        meals: []
+      });
+      setWeeklyData([]);
     } finally {
       setIsLoading(false);
     }
@@ -66,19 +107,40 @@ export default function DashboardScreen() {
   //   datasets: [{ data: [0, 0, 0, 0, 0, 0, 0] }]
   // };
   const chartData = useMemo(() => {
-    if (!weeklyData.length) {
+    try {
+      if (!Array.isArray(weeklyData) || weeklyData.length === 0) {
+        console.log('[Dashboard] No weekly data available for chart');
+        return {
+          labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+          datasets: [{ data: [0, 0, 0, 0, 0, 0, 0] }]
+        };
+      }
+
+      const labels = weeklyData.map(d => {
+        try {
+          return new Date(d.date).toLocaleDateString('en-US', { weekday: 'short' });
+        } catch (e) {
+          console.error('[Dashboard] Error formatting date:', e);
+          return 'N/A';
+        }
+      });
+
+      const data = weeklyData.map(d => {
+        const calories = typeof d.totalCalories === 'number' ? d.totalCalories : 0;
+        return Math.max(0, calories); // Ensure non-negative values
+      });
+
+      return {
+        labels,
+        datasets: [{ data }]
+      };
+    } catch (error) {
+      console.error('[Dashboard] Error preparing chart data:', error);
       return {
         labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
         datasets: [{ data: [0, 0, 0, 0, 0, 0, 0] }]
       };
     }
-
-    return {
-      labels: weeklyData.map(d => new Date(d.date).toLocaleDateString('en-US', { weekday: 'short' })),
-      datasets: [{
-        data: weeklyData.map(d => d.totalCalories || 0)
-      }]
-    };
   }, [weeklyData]);
 
   const chartConfig = {
@@ -152,8 +214,17 @@ export default function DashboardScreen() {
     );
   }
 
+  // Ensure we have valid data before rendering
+  if (!dailyStats) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <Text style={styles.loadingText}>No data available</Text>
+      </View>
+    );
+  }
+
   return (
-    <ScrollView style={styles.container}>\
+    <ScrollView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Dashboard</Text>
         <View style={styles.headerControls}>
@@ -186,7 +257,7 @@ export default function DashboardScreen() {
         <Text style={styles.sectionTitle}>
           Weekly Calories
         </Text>
-        {weeklyData.length > 0 ? (
+        {Array.isArray(weeklyData) && weeklyData.length > 0 ? (
           <LineChart
             data={chartData}
             width={Dimensions.get('window').width - 32}
@@ -211,25 +282,25 @@ export default function DashboardScreen() {
         <View style={styles.statsGrid}>
           <View style={styles.statItem}>
             <Text style={styles.statValue}>
-              {dailyStats?.totalCalories || 0}
+              {Math.round(dailyStats.totalCalories || 0)}
             </Text>
             <Text style={styles.statLabel}>Calories</Text>
           </View>
           <View style={styles.statItem}>
             <Text style={styles.statValue}>
-              {(dailyStats?.totalCarbs || 0).toFixed(1)}g
+              {Math.round(dailyStats.totalCarbs || 0)}g
             </Text>
             <Text style={styles.statLabel}>Carbs</Text>
           </View>
           <View style={styles.statItem}>
             <Text style={styles.statValue}>
-              {(dailyStats?.totalProtein || 0).toFixed(1)}g
+              {Math.round(dailyStats.totalProtein || 0)}g
             </Text>
             <Text style={styles.statLabel}>Protein</Text>
           </View>
           <View style={styles.statItem}>
             <Text style={styles.statValue}>
-              {(dailyStats?.totalFats || 0).toFixed(1)}g
+              {Math.round(dailyStats.totalFats || 0)}g
             </Text>
             <Text style={styles.statLabel}>Fats</Text>
           </View>
@@ -241,15 +312,15 @@ export default function DashboardScreen() {
         <Text style={styles.sectionTitle}>
           Meal History
         </Text>
-        {dailyStats?.meals && dailyStats.meals.length > 0 ? (
+        {Array.isArray(dailyStats.meals) && dailyStats.meals.length > 0 ? (
           dailyStats.meals.map((meal, index) => (
             <View key={index} style={styles.mealItem}>
               <View style={styles.mealTimeContainer}>
-                <Text style={styles.mealTime}>{meal.time}</Text>
+                <Text style={styles.mealTime}>{meal.time || 'N/A'}</Text>
               </View>
               <View style={styles.mealDetails}>
-                <Text style={styles.mealFood}>{meal.food}</Text>
-                <Text style={styles.mealCalories}>{meal.calories} cal</Text>
+                <Text style={styles.mealFood}>{meal.food || 'Unknown'}</Text>
+                <Text style={styles.mealCalories}>{Math.round(meal.calories || 0)} cal</Text>
               </View>
             </View>
           ))

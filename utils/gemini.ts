@@ -47,6 +47,7 @@ export async function analyzeFood(foodDescription: string): Promise<NutritionInf
     try {
       // Parse the cleaned response
       const nutritionInfo = JSON.parse(cleanedText);
+      console.log('nutritionInfo', nutritionInfo);
       
       // Validate the response structure
       if (!nutritionInfo.calories || !nutritionInfo.macros || 
