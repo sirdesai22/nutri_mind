@@ -2,8 +2,8 @@ import { storage } from '@/utils/storage';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect } from '@react-navigation/native';
-import React, { useMemo, useState } from 'react';
-import { Alert, Dimensions, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Alert, Dimensions, Platform, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 
 interface DailyStats {
@@ -16,6 +16,11 @@ interface DailyStats {
     time: string;
     food: string;
     calories: number;
+    macros: {
+      carbs: number;
+      protein: number;
+      fats: number;
+    };
   }[];
 }
 
@@ -30,10 +35,8 @@ export default function DashboardScreen() {
     setIsLoading(true);
     try {
       const dateStr = selectedDate.toISOString().split('T')[0];
-      console.log('[Dashboard] Loading data for date:', dateStr);
-      
+    
       const data = await storage.getDailyData(dateStr);
-      console.log('[Dashboard] Retrieved data:', JSON.stringify(data, null, 2));
       
       if (data) {
         // Ensure all required fields exist with default values
@@ -68,7 +71,7 @@ export default function DashboardScreen() {
       }
 
       const weekly = await storage.getWeeklyData();
-      console.log('[Dashboard] Retrieved weekly data:', JSON.stringify(weekly, null, 2));
+      // console.log('[Dashboard] Retrieved weekly data:', JSON.stringify(weekly, null, 2));
       
       // Ensure weekly data is an array
       if (Array.isArray(weekly)) {
@@ -77,6 +80,15 @@ export default function DashboardScreen() {
         console.log('[Dashboard] Invalid weekly data format, setting empty array');
         setWeeklyData([]);
       }
+      // setDailyStats({
+      //   date: selectedDate.toISOString().split('T')[0],
+      //   totalCalories: 0,
+      //   totalCarbs: 0,
+      //   totalProtein: 0,
+      //   totalFats: 0,
+      //   meals: []
+      // });
+      // setWeeklyData([]);
     } catch (error) {
       console.error('[Dashboard] Error loading data:', error);
       // Set default values on error
@@ -95,11 +107,9 @@ export default function DashboardScreen() {
   };
 
   // // Refresh data when screen comes into focus
-  useFocusEffect(
-    React.useCallback(() => {
-      loadData();
-    }, [selectedDate])
-  );
+useEffect(() => {
+  loadData();
+}, [selectedDate]);
 
   //dummy data for chart
   // const chartData = {
@@ -224,7 +234,9 @@ export default function DashboardScreen() {
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container}
+    refreshControl={<RefreshControl refreshing={isLoading} onRefresh={loadData} />}
+    >
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Dashboard</Text>
         <View style={styles.headerControls}>
@@ -320,7 +332,10 @@ export default function DashboardScreen() {
               </View>
               <View style={styles.mealDetails}>
                 <Text style={styles.mealFood}>{meal.food || 'Unknown'}</Text>
-                <Text style={styles.mealCalories}>{Math.round(meal.calories || 0)} cal</Text>
+                <View style={styles.mealMacrosContainer}>
+                  <Text style={styles.mealCalories}>{Math.round(meal.calories || 0)} cal</Text>
+                  <Text style={styles.mealMacros}>{Math.round(meal.macros.carbs || 0)}g carbs, {Math.round(meal.macros.protein || 0)}g protein, {Math.round(meal.macros.fats || 0)}g fats</Text>
+                </View>
               </View>
             </View>
           ))
@@ -483,6 +498,15 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   mealCalories: {
+    color: '#666666',
+    fontSize: 12,
+  },
+  mealMacrosContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  mealMacros: {
     color: '#666666',
     fontSize: 12,
   },

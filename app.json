@@ -21,7 +21,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.sirdesaiexecutive.calorie_tracker"
+      "package": "com.sirdesaiexe.calorie_tracker"
     },
     "web": {
       "bundler": "metro",
