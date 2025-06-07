@@ -398,12 +398,19 @@ const styles = StyleSheet.create({
   userMessage: {
     alignSelf: 'flex-end',
     backgroundColor: '#4CAF50',
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+    maxWidth: '80%',
   },
   aiMessage: {
     alignSelf: 'flex-start',
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#E0E0E0',
+    maxWidth: '80%',
   },
   userMessageText: {
     color: '#FFFFFF',
@@ -414,9 +421,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   deleteButton: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
+    // position: 'absolute',
+    // top: 8,
+    // right: 8,
   },
   inputContainer: {
     flexDirection: 'row',
