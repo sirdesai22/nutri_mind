@@ -2,7 +2,7 @@ import { storage } from '@/utils/storage';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, Dimensions, Platform, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Dimensions, Platform, RefreshControl, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 
 interface DailyStats {
@@ -254,129 +254,134 @@ useEffect(() => {
   }
 
   return (
-    <ScrollView style={styles.container}
-    refreshControl={<RefreshControl refreshing={isLoading} onRefresh={loadData} />}
-    >
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Dashboard</Text>
-        <View style={styles.headerControls}>
-          <TouchableOpacity 
-            style={styles.resetButton}
-            onPress={handleResetToday}>
-            <Ionicons name="refresh-outline" size={20} color="#ff4444" />
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.dateSelector}
-            onPress={() => setShowDatePicker(true)}>
-            <Text style={styles.dateText}>{formatDate(selectedDate)}</Text>
-            <Ionicons name="calendar-outline" size={20} color="#4CAF50" />
-          </TouchableOpacity>
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollViewContent}
+        refreshControl={<RefreshControl refreshing={isLoading} onRefresh={loadData} />}
+      >
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Dashboard</Text>
+          <View style={styles.headerControls}>
+            <TouchableOpacity 
+              style={styles.resetButton}
+              onPress={handleResetToday}>
+              <Ionicons name="refresh-outline" size={20} color="#ff4444" />
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.dateSelector}
+              onPress={() => setShowDatePicker(true)}>
+              <Text style={styles.dateText}>{formatDate(selectedDate)}</Text>
+              <Ionicons name="calendar-outline" size={20} color="#4CAF50" />
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
 
-      {showDatePicker && (
-        <DateTimePicker
-          value={selectedDate}
-          mode="date"
-          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={handleDateChange}
-          maximumDate={new Date()}
-        />
-      )}
-
-      {/* Weekly Calories Graph */}
-      <View style={styles.graphContainer}>
-        <Text style={styles.sectionTitle}>
-          Weekly Calories
-        </Text>
-        {Array.isArray(weeklyData) && weeklyData.length > 0 ? (
-          <View style={styles.graph}>
-            <LineChart
-              data={chartData}
-              width={Dimensions.get('window').width - 64}
-              height={220}
-              chartConfig={chartConfig}
-              bezier
-              style={styles.graph}
-              fromZero
-              withInnerLines={true}
-              withOuterLines={true}
-              withVerticalLines={false}
-              withHorizontalLines={true}
-              withDots={true}
-              withShadow={false}
-              withVerticalLabels={true}
-              withHorizontalLabels={true}
-              segments={5}
-            />
-          </View>
-        ) : (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>No data available for this week</Text>
-          </View>
+        {showDatePicker && (
+          <DateTimePicker
+            value={selectedDate}
+            mode="date"
+            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            onChange={handleDateChange}
+            maximumDate={new Date()}
+          />
         )}
-      </View>
 
-      {/* Daily Summary */}
-      <View style={styles.summaryContainer}>
-        <Text style={styles.sectionTitle}>
-          Daily Summary
-        </Text>
-        <View style={styles.statsGrid}>
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>
-              {Math.round(dailyStats.totalCalories || 0)}
-            </Text>
-            <Text style={styles.statLabel}>Calories</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>
-              {Math.round(dailyStats.totalCarbs || 0)}g
-            </Text>
-            <Text style={styles.statLabel}>Carbs</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>
-              {Math.round(dailyStats.totalProtein || 0)}g
-            </Text>
-            <Text style={styles.statLabel}>Protein</Text>
-          </View>
-          <View style={styles.statItem}>
-            <Text style={styles.statValue}>
-              {Math.round(dailyStats.totalFats || 0)}g
-            </Text>
-            <Text style={styles.statLabel}>Fats</Text>
+        {/* Weekly Calories Graph */}
+        <View style={styles.graphContainer}>
+          <Text style={styles.sectionTitle}>
+            Weekly Calories
+          </Text>
+          {Array.isArray(weeklyData) && weeklyData.length > 0 ? (
+            <View style={styles.graph}>
+              <LineChart
+                data={chartData}
+                width={Dimensions.get('window').width - 64}
+                height={220}
+                chartConfig={chartConfig}
+                bezier
+                style={styles.graph}
+                fromZero
+                withInnerLines={true}
+                withOuterLines={true}
+                withVerticalLines={false}
+                withHorizontalLines={true}
+                withDots={true}
+                withShadow={false}
+                withVerticalLabels={true}
+                withHorizontalLabels={true}
+                segments={5}
+              />
+            </View>
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateText}>No data available for this week</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Daily Summary */}
+        <View style={styles.summaryContainer}>
+          <Text style={styles.sectionTitle}>
+            Daily Summary
+          </Text>
+          <View style={styles.statsGrid}>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>
+                {Math.round(dailyStats.totalCalories || 0)}
+              </Text>
+              <Text style={styles.statLabel}>Calories</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>
+                {Math.round(dailyStats.totalCarbs || 0)}g
+              </Text>
+              <Text style={styles.statLabel}>Carbs</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>
+                {Math.round(dailyStats.totalProtein || 0)}g
+              </Text>
+              <Text style={styles.statLabel}>Protein</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>
+                {Math.round(dailyStats.totalFats || 0)}g
+              </Text>
+              <Text style={styles.statLabel}>Fats</Text>
+            </View>
           </View>
         </View>
-      </View>
 
-      {/* Meal History */}
-      <View style={styles.mealHistoryContainer}>
-        <Text style={styles.sectionTitle}>
-          Meal History
-        </Text>
-        {Array.isArray(dailyStats.meals) && dailyStats.meals.length > 0 ? (
-          dailyStats.meals.map((meal, index) => (
-            <View key={index} style={styles.mealItem}>
-              <View style={styles.mealTimeContainer}>
-                <Text style={styles.mealTime}>{meal.time || 'N/A'}</Text>
-              </View>
-              <View style={styles.mealDetails}>
-                <Text style={styles.mealFood}>{meal.food.length > 30 ? meal.food.slice(0, 30) + '...' : meal.food}</Text>
-                <View style={styles.mealMacrosContainer}>
-                  <Text style={styles.mealCalories}>{Math.round(meal.calories || 0)} cal</Text>
-                  <Text style={styles.mealMacros}>{Math.round(meal.macros.carbs || 0)}g carbs, {Math.round(meal.macros.protein || 0)}g protein, {Math.round(meal.macros.fats || 0)}g fats</Text>
+        {/* Meal History */}
+        <View style={styles.mealHistoryContainer}>
+          <Text style={styles.sectionTitle}>
+            Meal History
+          </Text>
+          {Array.isArray(dailyStats.meals) && dailyStats.meals.length > 0 ? (
+            dailyStats.meals.map((meal, index) => (
+              <View key={index} style={styles.mealItem}>
+                <View style={styles.mealTimeContainer}>
+                  <Text style={styles.mealTime}>{meal.time || 'N/A'}</Text>
+                </View>
+                <View style={styles.mealDetails}>
+                  <Text style={styles.mealFood}>{meal.food.length > 30 ? meal.food.slice(0, 30) + '...' : meal.food}</Text>
+                  <View style={styles.mealMacrosContainer}>
+                    <Text style={styles.mealCalories}>{Math.round(meal.calories || 0)} cal</Text>
+                    <Text style={styles.mealMacros}>{Math.round(meal.macros.carbs || 0)}g carbs, {Math.round(meal.macros.protein || 0)}g protein, {Math.round(meal.macros.fats || 0)}g fats</Text>
+                  </View>
                 </View>
               </View>
+            ))
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateText}>No meals recorded for this day</Text>
             </View>
-          ))
-        ) : (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>No meals recorded for this day</Text>
-          </View>
-        )}
-      </View>
-    </ScrollView>
+          )}
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -384,6 +389,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F5F5',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollViewContent: {
+    // paddingTop: Platform.OS === 'ios' ? 0 : StatusBar.currentHeight,
   },
   header: {
     flexDirection: 'row',
@@ -393,7 +404,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E0E0E0',
-    paddingTop: 25,
+    // paddingTop: Platform.OS === 'ios' ? 25 : 16,
   },
   headerTitle: {
     fontSize: 24,

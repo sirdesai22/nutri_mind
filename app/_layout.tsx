@@ -1,7 +1,13 @@
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+import React from 'react';
+import { Platform, View } from 'react-native';
+
+// Initialize SVG components
+if (Platform.OS === 'ios') {
+  require('react-native-svg');
+}
 
 export default function RootLayout() {
   const [loaded] = useFonts({
@@ -14,12 +20,17 @@ export default function RootLayout() {
   }
 
   return (
-    <>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+      <StatusBar style="dark" backgroundColor="#FFFFFF" />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: '#FFFFFF' },
+        }}
+      >
+        <Stack.Screen name="(tabs)" />
         <Stack.Screen name="+not-found" />
       </Stack>
-      <StatusBar style="dark" translucent={false} backgroundColor="white" />
-    </>
+    </View>
   );
 }
