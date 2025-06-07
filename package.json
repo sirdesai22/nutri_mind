@@ -11,9 +11,13 @@
     "lint": "expo lint"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
     "@expo/vector-icons": "^14.1.0",
     "@google/genai": "^0.13.0",
     "@google/generative-ai": "^0.24.1",
+    "@mui/material": "^7.1.1",
+    "@mui/x-charts": "^8.5.1",
     "@react-native-async-storage/async-storage": "2.1.2",
     "@react-native-community/datetimepicker": "^8.3.0",
     "@react-navigation/bottom-tabs": "^7.3.10",
@@ -37,9 +41,12 @@
     "react-native": "0.79.2",
     "react-native-chart-kit": "^6.12.0",
     "react-native-gesture-handler": "~2.24.0",
+    "react-native-gifted-charts": "^1.4.61",
+    "react-native-linear-gradient": "^2.8.3",
     "react-native-reanimated": "~3.17.4",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "~4.10.0",
+    "react-native-svg": "^15.12.0",
     "react-native-web": "~0.20.0",
     "react-native-webview": "13.13.5"
   },

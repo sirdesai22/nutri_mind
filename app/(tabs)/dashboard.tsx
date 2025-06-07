@@ -1,9 +1,8 @@
 import { storage } from '@/utils/storage';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useFocusEffect } from '@react-navigation/native';
-import React, { useMemo, useState } from 'react';
-import { Alert, Dimensions, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Alert, Dimensions, Platform, RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 
 interface DailyStats {
@@ -16,6 +15,11 @@ interface DailyStats {
     time: string;
     food: string;
     calories: number;
+    macros: {
+      carbs: number;
+      protein: number;
+      fats: number;
+    };
   }[];
 }
 
@@ -30,10 +34,8 @@ export default function DashboardScreen() {
     setIsLoading(true);
     try {
       const dateStr = selectedDate.toISOString().split('T')[0];
-      console.log('[Dashboard] Loading data for date:', dateStr);
-      
+    
       const data = await storage.getDailyData(dateStr);
-      console.log('[Dashboard] Retrieved data:', JSON.stringify(data, null, 2));
       
       if (data) {
         // Ensure all required fields exist with default values
@@ -68,7 +70,7 @@ export default function DashboardScreen() {
       }
 
       const weekly = await storage.getWeeklyData();
-      console.log('[Dashboard] Retrieved weekly data:', JSON.stringify(weekly, null, 2));
+      // console.log('[Dashboard] Retrieved weekly data:', JSON.stringify(weekly, null, 2));
       
       // Ensure weekly data is an array
       if (Array.isArray(weekly)) {
@@ -77,6 +79,15 @@ export default function DashboardScreen() {
         console.log('[Dashboard] Invalid weekly data format, setting empty array');
         setWeeklyData([]);
       }
+      // setDailyStats({
+      //   date: selectedDate.toISOString().split('T')[0],
+      //   totalCalories: 0,
+      //   totalCarbs: 0,
+      //   totalProtein: 0,
+      //   totalFats: 0,
+      //   meals: []
+      // });
+      // setWeeklyData([]);
     } catch (error) {
       console.error('[Dashboard] Error loading data:', error);
       // Set default values on error
@@ -95,11 +106,9 @@ export default function DashboardScreen() {
   };
 
   // // Refresh data when screen comes into focus
-  useFocusEffect(
-    React.useCallback(() => {
-      loadData();
-    }, [selectedDate])
-  );
+useEffect(() => {
+  loadData();
+}, [selectedDate]);
 
   //dummy data for chart
   // const chartData = {
@@ -109,35 +118,47 @@ export default function DashboardScreen() {
   const chartData = useMemo(() => {
     try {
       if (!Array.isArray(weeklyData) || weeklyData.length === 0) {
-        console.log('[Dashboard] No weekly data available for chart');
         return {
           labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
           datasets: [{ data: [0, 0, 0, 0, 0, 0, 0] }]
         };
       }
 
-      const labels = weeklyData.map(d => {
-        try {
-          return new Date(d.date).toLocaleDateString('en-US', { weekday: 'short' });
-        } catch (e) {
-          console.error('[Dashboard] Error formatting date:', e);
-          return 'N/A';
-        }
-      });
+      // Get today's date
+      const today = new Date();
+      const dayOfWeek = today.getDay(); // 0 is Sunday, 1 is Monday, etc.
 
-      const data = weeklyData.map(d => {
-        const calories = typeof d.totalCalories === 'number' ? d.totalCalories : 0;
-        return Math.max(0, calories); // Ensure non-negative values
+      // Ensure we have exactly 7 days of data
+      const paddedData = [...weeklyData];
+      while (paddedData.length < 7) {
+        paddedData.push({
+          date: new Date().toISOString().split('T')[0],
+          totalCalories: 0,
+          totalCarbs: 0,
+          totalProtein: 0,
+          totalFats: 0,
+          meals: []
+        });
+      }
+
+      // Map the data to the correct days of the week
+      const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const adjustedData = weekDays.map((day, index) => {
+        const dataIndex = (index) % 7; // Shift the index to start from Monday
+        const dataPoint = paddedData[dataIndex];
+        return typeof dataPoint.totalCalories === 'number' 
+          ? Math.max(0, Math.min(dataPoint.totalCalories, 10000)) 
+          : 0;
       });
 
       return {
-        labels,
-        datasets: [{ data }]
+        labels: weekDays,
+        datasets: [{ data: adjustedData }]
       };
     } catch (error) {
       console.error('[Dashboard] Error preparing chart data:', error);
       return {
-        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        labels: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
         datasets: [{ data: [0, 0, 0, 0, 0, 0, 0] }]
       };
     }
@@ -154,6 +175,15 @@ export default function DashboardScreen() {
       r: '6',
       strokeWidth: '2',
       stroke: '#4CAF50'
+    },
+    propsForBackgroundLines: {
+      strokeWidth: 1,
+      stroke: 'rgba(0,0,0,0.1)',
+      strokeDasharray: '0',
+    },
+    propsForLabels: {
+      fontSize: 12,
+      fontWeight: '500',
     }
   };
 
@@ -224,7 +254,9 @@ export default function DashboardScreen() {
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container}
+    refreshControl={<RefreshControl refreshing={isLoading} onRefresh={loadData} />}
+    >
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Dashboard</Text>
         <View style={styles.headerControls}>
@@ -258,15 +290,26 @@ export default function DashboardScreen() {
           Weekly Calories
         </Text>
         {Array.isArray(weeklyData) && weeklyData.length > 0 ? (
-          <LineChart
-            data={chartData}
-            width={Dimensions.get('window').width - 32}
-            height={220}
-            chartConfig={chartConfig}
-            bezier
-            style={styles.graph}
-            fromZero
-          />
+          <View style={styles.graph}>
+            <LineChart
+              data={chartData}
+              width={Dimensions.get('window').width - 64}
+              height={220}
+              chartConfig={chartConfig}
+              bezier
+              style={styles.graph}
+              fromZero
+              withInnerLines={true}
+              withOuterLines={true}
+              withVerticalLines={false}
+              withHorizontalLines={true}
+              withDots={true}
+              withShadow={false}
+              withVerticalLabels={true}
+              withHorizontalLabels={true}
+              segments={5}
+            />
+          </View>
         ) : (
           <View style={styles.emptyState}>
             <Text style={styles.emptyStateText}>No data available for this week</Text>
@@ -319,8 +362,11 @@ export default function DashboardScreen() {
                 <Text style={styles.mealTime}>{meal.time || 'N/A'}</Text>
               </View>
               <View style={styles.mealDetails}>
-                <Text style={styles.mealFood}>{meal.food || 'Unknown'}</Text>
-                <Text style={styles.mealCalories}>{Math.round(meal.calories || 0)} cal</Text>
+                <Text style={styles.mealFood}>{meal.food.length > 30 ? meal.food.slice(0, 30) + '...' : meal.food}</Text>
+                <View style={styles.mealMacrosContainer}>
+                  <Text style={styles.mealCalories}>{Math.round(meal.calories || 0)} cal</Text>
+                  <Text style={styles.mealMacros}>{Math.round(meal.macros.carbs || 0)}g carbs, {Math.round(meal.macros.protein || 0)}g protein, {Math.round(meal.macros.fats || 0)}g fats</Text>
+                </View>
               </View>
             </View>
           ))
@@ -466,7 +512,7 @@ const styles = StyleSheet.create({
     borderColor: '#E0E0E0',
   },
   mealTimeContainer: {
-    width: 80,
+    width: 50,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -483,6 +529,15 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   mealCalories: {
+    color: '#666666',
+    fontSize: 12,
+  },
+  mealMacrosContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  mealMacros: {
     color: '#666666',
     fontSize: 12,
   },
