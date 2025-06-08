@@ -194,32 +194,22 @@ export default function HomeScreen() {
     }
   }, []);
 
-  const handleDeleteMessage = useCallback((messageId: string) => {
+  const handleDeleteMessage = useCallback((index: number) => {
     try {
       setMessages(prev => {
-        const messageToDelete = prev.find(m => m.id === messageId);
+        const messageToDelete = prev[index];
         if (!messageToDelete) return prev;
 
-        const associatedMessage = prev.find(m => 
-          m.associatedMessageId === messageId || m.id === messageToDelete.associatedMessageId
-        );
+        const associatedAImessage = prev[index + 1];
 
-        if (messageToDelete.isUser || (associatedMessage && associatedMessage.isUser)) {
-          const messageToSubtract = messageToDelete.isUser ? messageToDelete : associatedMessage;
-          if (messageToSubtract) {
-            setTotalCalories(prev => Math.max(0, prev - messageToSubtract.calories));
-            setTotalMacros(prev => ({
-              carbs: Math.max(0, prev.carbs - messageToSubtract.macros.carbs),
-              protein: Math.max(0, prev.protein - messageToSubtract.macros.protein),
-              fats: Math.max(0, prev.fats - messageToSubtract.macros.fats),
-            }));
-          }
-        }
+        setTotalCalories(prev => Math.max(0, prev - associatedAImessage.calories));
+        setTotalMacros(prev => ({
+          carbs: Math.max(0, prev.carbs - associatedAImessage.macros.carbs),
+          protein: Math.max(0, prev.protein - associatedAImessage.macros.protein),
+          fats: Math.max(0, prev.fats - associatedAImessage.macros.fats),
+        }));
 
-        const updatedMessages = prev.filter(m => 
-          m.id !== messageId && 
-          m.id !== associatedMessage?.id
-        );
+        const updatedMessages = prev.filter((_, i) => i !== index && i !== index + 1);
 
         // Update storage with the new state
         const today = new Date().toISOString().split('T')[0];
@@ -308,7 +298,7 @@ export default function HomeScreen() {
               {message.isUser && (
                 <TouchableOpacity
                   style={styles.deleteButton}
-                  onPress={() => handleDeleteMessage(message.id)}>
+                  onPress={() => handleDeleteMessage(index)}>
                   <Ionicons name="trash-outline" size={20} color="#ff4444" />
                 </TouchableOpacity>
               )}
