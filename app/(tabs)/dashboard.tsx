@@ -4,6 +4,9 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Dimensions, Platform, RefreshControl, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
+import { ThemeToggle } from '../components/ThemeToggle';
+import { useTheme } from '../context/ThemeContext';
+import { darkTheme, lightTheme } from '../theme/colors';
 
 interface DailyStats {
   date: string;
@@ -24,6 +27,8 @@ interface DailyStats {
 }
 
 export default function DashboardScreen() {
+  const { isDark } = useTheme();
+  const theme = isDark ? darkTheme : lightTheme;
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [dailyStats, setDailyStats] = useState<DailyStats | null>(null);
@@ -165,8 +170,8 @@ useEffect(() => {
   }, [weeklyData]);
 
   const chartConfig = {
-    backgroundGradientFrom: '#FFFFFF',
-    backgroundGradientTo: '#F5F5F5',
+    backgroundGradientFrom: theme.background,
+    backgroundGradientTo: theme.background,
     color: (opacity = 1) => `rgba(76, 175, 80, ${opacity})`,
     strokeWidth: 2,
     barPercentage: 0.5,
@@ -178,12 +183,13 @@ useEffect(() => {
     },
     propsForBackgroundLines: {
       strokeWidth: 1,
-      stroke: 'rgba(0,0,0,0.1)',
+      stroke: theme.border,
       strokeDasharray: '0',
     },
     propsForLabels: {
       fontSize: 12,
       fontWeight: '500',
+      fill: theme.text,
     }
   };
 
@@ -238,8 +244,8 @@ useEffect(() => {
 
   if (isLoading) {
     return (
-      <View style={[styles.container, styles.centerContent]}>
-        <Text style={styles.loadingText}>Loading...</Text>
+      <View style={[styles.container, styles.centerContent, { backgroundColor: theme.background }]}>
+        <Text style={[styles.loadingText, { color: theme.text }]}>Loading...</Text>
       </View>
     );
   }
@@ -247,33 +253,26 @@ useEffect(() => {
   // Ensure we have valid data before rendering
   if (!dailyStats) {
     return (
-      <View style={[styles.container, styles.centerContent]}>
-        <Text style={styles.loadingText}>No data available</Text>
+      <View style={[styles.container, styles.centerContent, { backgroundColor: theme.background }]}>
+        <Text style={[styles.loadingText, { color: theme.text }]}>No data available</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={theme.background} />
       <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={styles.scrollViewContent}
         refreshControl={<RefreshControl refreshing={isLoading} onRefresh={loadData} />}
       >
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>Dashboard</Text>
-          <View style={styles.headerControls}>
-            <TouchableOpacity 
-              style={styles.resetButton}
-              onPress={handleResetToday}>
-              <Ionicons name="refresh-outline" size={20} color="#ff4444" />
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.dateSelector}
-              onPress={() => setShowDatePicker(true)}>
-              <Text style={styles.dateText}>{formatDate(selectedDate)}</Text>
-              <Ionicons name="calendar-outline" size={20} color="#4CAF50" />
+        <View style={[styles.header, { borderBottomColor: theme.border }]}>
+          <Text style={[styles.headerTitle, { color: theme.text, fontSize: 24, fontWeight: 'bold' }]}>Dashboard</Text>
+          <View style={styles.headerRight}>
+            <ThemeToggle />
+            <TouchableOpacity onPress={handleResetToday} style={styles.resetButton}>
+              <Ionicons name="refresh" size={24} color={theme.text} />
             </TouchableOpacity>
           </View>
         </View>
@@ -289,8 +288,8 @@ useEffect(() => {
         )}
 
         {/* Weekly Calories Graph */}
-        <View style={styles.graphContainer}>
-          <Text style={styles.sectionTitle}>
+        <View style={[styles.graphContainer, { backgroundColor: theme.card }]}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>
             Weekly Calories
           </Text>
           {Array.isArray(weeklyData) && weeklyData.length > 0 ? (
@@ -322,30 +321,30 @@ useEffect(() => {
         </View>
 
         {/* Daily Summary */}
-        <View style={styles.summaryContainer}>
-          <Text style={styles.sectionTitle}>
+        <View style={[styles.summaryContainer, { backgroundColor: theme.card }]}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>
             Daily Summary
           </Text>
           <View style={styles.statsGrid}>
-            <View style={styles.statItem}>
+            <View style={[styles.statItem, { backgroundColor: theme.cardSecondary, borderColor: theme.border }]}>
               <Text style={styles.statValue}>
                 {Math.round(dailyStats.totalCalories || 0)}
               </Text>
               <Text style={styles.statLabel}>Calories</Text>
             </View>
-            <View style={styles.statItem}>
+            <View style={[styles.statItem, { backgroundColor: theme.cardSecondary, borderColor: theme.border }]}>
               <Text style={styles.statValue}>
                 {Math.round(dailyStats.totalCarbs || 0)}g
               </Text>
               <Text style={styles.statLabel}>Carbs</Text>
             </View>
-            <View style={styles.statItem}>
+            <View style={[styles.statItem, { backgroundColor: theme.cardSecondary, borderColor: theme.border }]}>
               <Text style={styles.statValue}>
                 {Math.round(dailyStats.totalProtein || 0)}g
               </Text>
               <Text style={styles.statLabel}>Protein</Text>
             </View>
-            <View style={styles.statItem}>
+            <View style={[styles.statItem, { backgroundColor: theme.cardSecondary, borderColor: theme.border }]}>
               <Text style={styles.statValue}>
                 {Math.round(dailyStats.totalFats || 0)}g
               </Text>
@@ -355,21 +354,21 @@ useEffect(() => {
         </View>
 
         {/* Meal History */}
-        <View style={styles.mealHistoryContainer}>
-          <Text style={styles.sectionTitle}>
+        <View style={[styles.mealHistoryContainer, { backgroundColor: theme.card }]}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>
             Meal History
           </Text>
           {Array.isArray(dailyStats.meals) && dailyStats.meals.length > 0 ? (
             dailyStats.meals.map((meal, index) => (
-              <View key={index} style={styles.mealItem}>
+              <View key={index} style={[styles.mealItem, { borderColor: theme.border, backgroundColor: theme.cardSecondary }]}>
                 <View style={styles.mealTimeContainer}>
-                  <Text style={styles.mealTime}>{meal.time || 'N/A'}</Text>
+                  <Text style={[styles.mealTime, { color: '#4CAF50' }]}>{meal.time || 'N/A'}</Text>
                 </View>
                 <View style={styles.mealDetails}>
-                  <Text style={styles.mealFood}>{meal.food.length > 30 ? meal.food.slice(0, 30) + '...' : meal.food}</Text>
+                  <Text style={[styles.mealFood, { color: theme.text }]}>{meal.food.length > 30 ? meal.food.slice(0, 30) + '...' : meal.food}</Text>
                   <View style={styles.mealMacrosContainer}>
-                    <Text style={styles.mealCalories}>{Math.round(meal.calories || 0)} cal</Text>
-                    <Text style={styles.mealMacros}>{Math.round(meal.macros.carbs || 0)}g carbs, {Math.round(meal.macros.protein || 0)}g protein, {Math.round(meal.macros.fats || 0)}g fats</Text>
+                    <Text style={[styles.mealCalories, { color: theme.text }]}>{Math.round(meal.calories || 0)} cal</Text>
+                    <Text style={[styles.mealMacros, { color: theme.text }]}>{Math.round(meal.macros.carbs || 0)}g carbs, {Math.round(meal.macros.protein || 0)}g protein, {Math.round(meal.macros.fats || 0)}g fats</Text>
                   </View>
                 </View>
               </View>
@@ -388,7 +387,6 @@ useEffect(() => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
   },
   scrollView: {
     flex: 1,
@@ -400,28 +398,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-    // paddingTop: Platform.OS === 'ios' ? 25 : 16,
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333333',
+    fontSize: 20,
+    fontWeight: '600',
   },
-  headerControls: {
+  headerRight: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 16,
   },
   resetButton: {
     padding: 8,
-    backgroundColor: '#FFF5F5',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ff4444',
   },
   dateSelector: {
     flexDirection: 'row',
@@ -502,7 +493,7 @@ const styles = StyleSheet.create({
   mealHistoryContainer: {
     margin: 16,
     padding: 16,
-    backgroundColor: '#FFFFFF',
+    // backgroundColor: '#FFFFFF',
     borderRadius: 12,
     shadowColor: '#000',
     shadowOffset: {
@@ -516,11 +507,10 @@ const styles = StyleSheet.create({
   mealItem: {
     flexDirection: 'row',
     padding: 12,
-    backgroundColor: '#FFFFFF',
     borderRadius: 8,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#FFFFFF45',
   },
   mealTimeContainer: {
     width: 50,
@@ -566,7 +556,6 @@ const styles = StyleSheet.create({
     color: '#666666',
   },
   loadingText: {
-    color: '#333333',
     fontSize: 16,
   },
 });

@@ -3,7 +3,9 @@ import { storage } from '@/utils/storage';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { darkTheme, lightTheme } from '../theme/colors';
+import { useTheme } from '../context/ThemeContext';
 
 interface Message {
   id: string;
@@ -29,6 +31,9 @@ export default function HomeScreen() {
     fats: 0,
   });
   const [isLoading, setIsLoading] = useState(false);
+
+  const { isDark } = useTheme();
+  const theme = isDark ? darkTheme : lightTheme;
 
   const resetState = () => {
     setMessages([]);
@@ -258,41 +263,42 @@ export default function HomeScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: theme.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}>
+        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={theme.background} />
       <View style={styles.container}>
         {/* Nutrition Summary Card */}
-        <View style={styles.summaryCard}>
-          <Text style={styles.calories}>
+        <View style={[styles.summaryCard, { backgroundColor: theme.card }]}>
+          <Text style={[styles.calories, { color: theme.text }]}>
             {totalCalories} kcal
           </Text>
           <View style={styles.macrosContainer}>
             <View style={styles.macroItem}>
-              <Text style={styles.macroLabel}>Carbs</Text>
-              <Text style={styles.macroValue}>{Math.round(totalMacros.carbs)}g</Text>
+              <Text style={[styles.macroLabel, { color: theme.text }]}>Carbs</Text>
+              <Text style={[styles.macroValue, { color: theme.text }]}>{Math.round(totalMacros.carbs)}g</Text>
             </View>
             <View style={styles.macroItem}>
-              <Text style={styles.macroLabel}>Protein</Text>
-              <Text style={styles.macroValue}>{Math.round(totalMacros.protein)}g</Text>
+              <Text style={[styles.macroLabel, { color: theme.text }]}>Protein</Text>
+              <Text style={[styles.macroValue, { color: theme.text }]}>{Math.round(totalMacros.protein)}g</Text>
             </View>
             <View style={styles.macroItem}>
-              <Text style={styles.macroLabel}>Fats</Text>
-              <Text style={styles.macroValue}>{Math.round(totalMacros.fats)}g</Text>
+              <Text style={[styles.macroLabel, { color: theme.text }]}>Fats</Text>
+              <Text style={[styles.macroValue, { color: theme.text }]}>{Math.round(totalMacros.fats)}g</Text>
             </View>
           </View>
         </View>
 
         {/* Chat Messages */}
-        <ScrollView style={styles.messagesContainer}>
+        <ScrollView style={[styles.messagesContainer, { backgroundColor: theme.background }]}>
           {messages.map((message, index) => (
             <View
               key={index}
               style={[
                 styles.messageContainer,
-                message.isUser ? styles.userMessage : styles.aiMessage,
+                message.isUser ? [styles.userMessage, { backgroundColor: theme.card }] : [styles.aiMessage, { backgroundColor: theme.card }],
               ]}>
-              <Text style={message.isUser ? styles.userMessageText : styles.aiMessageText}>
+              <Text style={[message.isUser ? styles.userMessageText : styles.aiMessageText, { color: theme.text }]}>
                 {message.text}
               </Text>
               {message.isUser && (
@@ -307,13 +313,13 @@ export default function HomeScreen() {
         </ScrollView>
 
         {/* Input Area */}
-        <View style={styles.inputContainer}>
+        <View style={[styles.inputContainer, { backgroundColor: theme.background }]}>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: theme.card, color: theme.text }]}
             value={inputText}
             onChangeText={setInputText}
             placeholder="What did you eat?"
-            placeholderTextColor="#666666"
+            placeholderTextColor={theme.text}
             editable={!isLoading}
           />
           <TouchableOpacity
@@ -323,7 +329,7 @@ export default function HomeScreen() {
             <Ionicons 
               name={isLoading ? "hourglass-outline" : "send"} 
               size={24} 
-              color={isLoading ? "#666666" : "#4CAF50"} 
+              color={isLoading ? theme.text : '#4CAF50'} 
             />
           </TouchableOpacity>
         </View>
@@ -340,7 +346,7 @@ const styles = StyleSheet.create({
   summaryCard: {
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: '#E0E0E045',
     backgroundColor: '#FFFFFF',
     shadowColor: '#000',
     shadowOffset: {
@@ -398,8 +404,6 @@ const styles = StyleSheet.create({
   aiMessage: {
     alignSelf: 'flex-start',
     backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
     maxWidth: '80%',
   },
   userMessageText: {
@@ -419,7 +423,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     padding: 16,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: '#E0E0E045',
     backgroundColor: '#FFFFFF',
   },
   input: {

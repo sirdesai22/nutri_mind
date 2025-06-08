@@ -1,12 +1,34 @@
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
 import React from 'react';
+import { StatusBar } from 'react-native';
 import { Platform, View } from 'react-native';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
+import { darkTheme, lightTheme } from './theme/colors';
 
 // Initialize SVG components
 if (Platform.OS === 'ios') {
   require('react-native-svg');
+}
+
+function RootLayoutContent() {
+  const { isDark } = useTheme();
+  const theme = isDark ? darkTheme : lightTheme;
+
+  return (
+    <View style={{ flex: 1, backgroundColor: theme.background }}>
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={theme.background} />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: theme.background },
+        }}
+      >
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="+not-found" />
+      </Stack>
+    </View>
+  );
 }
 
 export default function RootLayout() {
@@ -20,17 +42,8 @@ export default function RootLayout() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
-      <StatusBar style="dark" backgroundColor="#FFFFFF" />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: '#FFFFFF' },
-        }}
-      >
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-    </View>
+    <ThemeProvider>
+      <RootLayoutContent />
+    </ThemeProvider>
   );
 }
