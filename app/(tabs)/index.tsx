@@ -4,8 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { darkTheme, lightTheme } from '../theme/colors';
 import { useTheme } from '../context/ThemeContext';
+import { darkTheme, lightTheme } from '../theme/colors';
 
 interface Message {
   id: string;
@@ -264,10 +264,10 @@ export default function HomeScreen() {
   return (
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: theme.background }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}>
-        <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={theme.background} />
-      <View style={styles.container}>
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={theme.background} />
+      <View style={styles.innerContainer}>
         {/* Nutrition Summary Card */}
         <View style={[styles.summaryCard, { backgroundColor: theme.card }]}>
           <Text style={[styles.calories, { color: theme.text }]}>
@@ -290,7 +290,10 @@ export default function HomeScreen() {
         </View>
 
         {/* Chat Messages */}
-        <ScrollView style={[styles.messagesContainer, { backgroundColor: theme.background }]}>
+        <ScrollView 
+          style={[styles.messagesContainer, { backgroundColor: theme.background }]}
+          contentContainerStyle={styles.messagesContentContainer}
+          keyboardShouldPersistTaps="handled">
           {messages.map((message, index) => (
             <View
               key={index}
@@ -311,7 +314,6 @@ export default function HomeScreen() {
             </View>
           ))}
         </ScrollView>
-
         {/* Input Area */}
         <View style={[styles.inputContainer, { backgroundColor: theme.background }]}>
           <TextInput
@@ -322,16 +324,22 @@ export default function HomeScreen() {
             placeholderTextColor={theme.text}
             editable={!isLoading}
           />
-          <TouchableOpacity
-            style={[styles.sendButton, isLoading && styles.sendButtonDisabled]}
-            onPress={() => inputText.trim() && !isLoading && handleSendMessage(inputText.trim())}
-            disabled={isLoading}>
-            <Ionicons 
-              name={isLoading ? "hourglass-outline" : "send"} 
-              size={24} 
-              color={isLoading ? theme.text : '#4CAF50'} 
-            />
-          </TouchableOpacity>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={80}
+            style={{ justifyContent: 'flex-end' }}
+          >
+            <TouchableOpacity
+              style={[styles.sendButton, isLoading && styles.sendButtonDisabled]}
+              onPress={() => inputText.trim() && !isLoading && handleSendMessage(inputText.trim())}
+              disabled={isLoading}>
+              <Ionicons 
+                name={isLoading ? "hourglass-outline" : "send"} 
+                size={24} 
+                color={isLoading ? theme.text : '#4CAF50'} 
+              />
+            </TouchableOpacity>
+          </KeyboardAvoidingView>
         </View>
       </View>
     </KeyboardAvoidingView>
@@ -342,6 +350,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F5F5',
+  },
+  innerContainer: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
   },
   summaryCard: {
     padding: 16,
@@ -382,7 +395,10 @@ const styles = StyleSheet.create({
   },
   messagesContainer: {
     flex: 1,
+  },
+  messagesContentContainer: {
     padding: 16,
+    flexGrow: 1,
   },
   messageContainer: {
     padding: 12,
@@ -425,6 +441,8 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#E0E0E045',
     backgroundColor: '#FFFFFF',
+    position: 'relative',
+    zIndex: 1,
   },
   input: {
     flex: 1,

@@ -271,8 +271,14 @@ useEffect(() => {
           <Text style={[styles.headerTitle, { color: theme.text, fontSize: 24, fontWeight: 'bold' }]}>Dashboard</Text>
           <View style={styles.headerRight}>
             <ThemeToggle />
-            <TouchableOpacity onPress={handleResetToday} style={styles.resetButton}>
+            {/* Reset All Data */}
+            {/* <TouchableOpacity onPress={handleResetToday} style={styles.resetButton}>
               <Ionicons name="refresh" size={24} color={theme.text} />
+            </TouchableOpacity> */}
+            {/* select date */}
+            <TouchableOpacity onPress={() => setShowDatePicker(true)} style={[styles.dateSelector, { backgroundColor: theme.cardSecondary, borderColor: theme.border }]}>
+              <Text style={[styles.dateText, { color: theme.text, fontSize: 16, fontWeight: 'bold' }]}>{formatDate(selectedDate)}</Text>
+              <Ionicons name="calendar" size={24} color={theme.text} />
             </TouchableOpacity>
           </View>
         </View>
