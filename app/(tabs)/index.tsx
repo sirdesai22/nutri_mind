@@ -3,7 +3,9 @@ import { storage } from '@/utils/storage';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { useTheme } from '../context/ThemeContext';
+import { darkTheme, lightTheme } from '../theme/colors';
 
 interface Message {
   id: string;
@@ -29,6 +31,9 @@ export default function HomeScreen() {
     fats: 0,
   });
   const [isLoading, setIsLoading] = useState(false);
+
+  const { isDark } = useTheme();
+  const theme = isDark ? darkTheme : lightTheme;
 
   const resetState = () => {
     setMessages([]);
@@ -194,32 +199,22 @@ export default function HomeScreen() {
     }
   }, []);
 
-  const handleDeleteMessage = useCallback((messageId: string) => {
+  const handleDeleteMessage = useCallback((index: number) => {
     try {
       setMessages(prev => {
-        const messageToDelete = prev.find(m => m.id === messageId);
+        const messageToDelete = prev[index];
         if (!messageToDelete) return prev;
 
-        const associatedMessage = prev.find(m => 
-          m.associatedMessageId === messageId || m.id === messageToDelete.associatedMessageId
-        );
+        const associatedAImessage = prev[index + 1];
 
-        if (messageToDelete.isUser || (associatedMessage && associatedMessage.isUser)) {
-          const messageToSubtract = messageToDelete.isUser ? messageToDelete : associatedMessage;
-          if (messageToSubtract) {
-            setTotalCalories(prev => Math.max(0, prev - messageToSubtract.calories));
-            setTotalMacros(prev => ({
-              carbs: Math.max(0, prev.carbs - messageToSubtract.macros.carbs),
-              protein: Math.max(0, prev.protein - messageToSubtract.macros.protein),
-              fats: Math.max(0, prev.fats - messageToSubtract.macros.fats),
-            }));
-          }
-        }
+        setTotalCalories(prev => Math.max(0, prev - associatedAImessage.calories));
+        setTotalMacros(prev => ({
+          carbs: Math.max(0, prev.carbs - associatedAImessage.macros.carbs),
+          protein: Math.max(0, prev.protein - associatedAImessage.macros.protein),
+          fats: Math.max(0, prev.fats - associatedAImessage.macros.fats),
+        }));
 
-        const updatedMessages = prev.filter(m => 
-          m.id !== messageId && 
-          m.id !== associatedMessage?.id
-        );
+        const updatedMessages = prev.filter((_, i) => i !== index && i !== index + 1);
 
         // Update storage with the new state
         const today = new Date().toISOString().split('T')[0];
@@ -268,74 +263,83 @@ export default function HomeScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={[styles.container, { backgroundColor: theme.background }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}>
-      <View style={styles.container}>
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={theme.background} />
+      <View style={styles.innerContainer}>
         {/* Nutrition Summary Card */}
-        <View style={styles.summaryCard}>
-          <Text style={styles.calories}>
+        <View style={[styles.summaryCard, { backgroundColor: theme.card }]}>
+          <Text style={[styles.calories, { color: theme.text }]}>
             {totalCalories} kcal
           </Text>
           <View style={styles.macrosContainer}>
             <View style={styles.macroItem}>
-              <Text style={styles.macroLabel}>Carbs</Text>
-              <Text style={styles.macroValue}>{Math.round(totalMacros.carbs)}g</Text>
+              <Text style={[styles.macroLabel, { color: theme.text }]}>Carbs</Text>
+              <Text style={[styles.macroValue, { color: theme.text }]}>{Math.round(totalMacros.carbs)}g</Text>
             </View>
             <View style={styles.macroItem}>
-              <Text style={styles.macroLabel}>Protein</Text>
-              <Text style={styles.macroValue}>{Math.round(totalMacros.protein)}g</Text>
+              <Text style={[styles.macroLabel, { color: theme.text }]}>Protein</Text>
+              <Text style={[styles.macroValue, { color: theme.text }]}>{Math.round(totalMacros.protein)}g</Text>
             </View>
             <View style={styles.macroItem}>
-              <Text style={styles.macroLabel}>Fats</Text>
-              <Text style={styles.macroValue}>{Math.round(totalMacros.fats)}g</Text>
+              <Text style={[styles.macroLabel, { color: theme.text }]}>Fats</Text>
+              <Text style={[styles.macroValue, { color: theme.text }]}>{Math.round(totalMacros.fats)}g</Text>
             </View>
           </View>
         </View>
 
         {/* Chat Messages */}
-        <ScrollView style={styles.messagesContainer}>
+        <ScrollView 
+          style={[styles.messagesContainer, { backgroundColor: theme.background }]}
+          contentContainerStyle={styles.messagesContentContainer}
+          keyboardShouldPersistTaps="handled">
           {messages.map((message, index) => (
             <View
               key={index}
               style={[
                 styles.messageContainer,
-                message.isUser ? styles.userMessage : styles.aiMessage,
+                message.isUser ? [styles.userMessage, { backgroundColor: theme.card }] : [styles.aiMessage, { backgroundColor: theme.card }],
               ]}>
-              <Text style={message.isUser ? styles.userMessageText : styles.aiMessageText}>
+              <Text style={[message.isUser ? styles.userMessageText : styles.aiMessageText, { color: theme.text }]}>
                 {message.text}
               </Text>
               {message.isUser && (
                 <TouchableOpacity
                   style={styles.deleteButton}
-                  onPress={() => handleDeleteMessage(message.id)}>
+                  onPress={() => handleDeleteMessage(index)}>
                   <Ionicons name="trash-outline" size={20} color="#ff4444" />
                 </TouchableOpacity>
               )}
             </View>
           ))}
         </ScrollView>
-
         {/* Input Area */}
-        <View style={styles.inputContainer}>
+        <View style={[styles.inputContainer, { backgroundColor: theme.background }]}>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: theme.card, color: theme.text }]}
             value={inputText}
             onChangeText={setInputText}
             placeholder="What did you eat?"
-            placeholderTextColor="#666666"
+            placeholderTextColor={theme.text}
             editable={!isLoading}
           />
-          <TouchableOpacity
-            style={[styles.sendButton, isLoading && styles.sendButtonDisabled]}
-            onPress={() => inputText.trim() && !isLoading && handleSendMessage(inputText.trim())}
-            disabled={isLoading}>
-            <Ionicons 
-              name={isLoading ? "hourglass-outline" : "send"} 
-              size={24} 
-              color={isLoading ? "#666666" : "#4CAF50"} 
-            />
-          </TouchableOpacity>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={80}
+            style={{ justifyContent: 'flex-end' }}
+          >
+            <TouchableOpacity
+              style={[styles.sendButton, isLoading && styles.sendButtonDisabled]}
+              onPress={() => inputText.trim() && !isLoading && handleSendMessage(inputText.trim())}
+              disabled={isLoading}>
+              <Ionicons 
+                name={isLoading ? "hourglass-outline" : "send"} 
+                size={24} 
+                color={isLoading ? theme.text : '#4CAF50'} 
+              />
+            </TouchableOpacity>
+          </KeyboardAvoidingView>
         </View>
       </View>
     </KeyboardAvoidingView>
@@ -347,10 +351,15 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F5F5F5',
   },
+  innerContainer: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+  },
   summaryCard: {
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
+    borderBottomColor: '#E0E0E045',
     backgroundColor: '#FFFFFF',
     shadowColor: '#000',
     shadowOffset: {
@@ -386,7 +395,10 @@ const styles = StyleSheet.create({
   },
   messagesContainer: {
     flex: 1,
+  },
+  messagesContentContainer: {
     padding: 16,
+    flexGrow: 1,
   },
   messageContainer: {
     padding: 12,
@@ -398,12 +410,17 @@ const styles = StyleSheet.create({
   userMessage: {
     alignSelf: 'flex-end',
     backgroundColor: '#4CAF50',
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+    maxWidth: '80%',
   },
   aiMessage: {
     alignSelf: 'flex-start',
     backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
+    maxWidth: '80%',
   },
   userMessageText: {
     color: '#FFFFFF',
@@ -414,16 +431,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   deleteButton: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
+    // position: 'absolute',
+    // top: 8,
+    // right: 8,
   },
   inputContainer: {
     flexDirection: 'row',
     padding: 16,
     borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
+    borderTopColor: '#E0E0E045',
     backgroundColor: '#FFFFFF',
+    position: 'relative',
+    zIndex: 1,
   },
   input: {
     flex: 1,
