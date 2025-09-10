@@ -389,11 +389,11 @@ export default function HomeScreen() {
       style={[styles.container, { backgroundColor: theme.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={theme.background} />
+      <StatusBar hidden />
       <View style={styles.innerContainer}>
         {/* Nutrition Summary Card */}
         <View style={[styles.summaryCard, { backgroundColor: theme.card }]}>
-          <Text style={[styles.calories, { color: theme.text }]}>
+          <Text style={[styles.calories, { color: theme.text, }]}>
             {totalCalories} kcal
           </Text>
           <View style={styles.macrosContainer}>
