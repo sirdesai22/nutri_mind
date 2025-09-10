@@ -1,9 +1,10 @@
 import { analyzeFood } from '@/utils/gemini';
 import { storage } from '@/utils/storage';
-import { Ionicons } from '@expo/vector-icons';
+import { AntDesign, Feather, FontAwesome6, Ionicons } from '@expo/vector-icons';
+import { CameraMode, CameraView, useCameraPermissions } from 'expo-camera';
 import { useFocusEffect } from '@react-navigation/native';
-import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Alert, Button, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { darkTheme, lightTheme } from '../theme/colors';
 
@@ -22,6 +23,11 @@ interface Message {
 }
 
 export default function HomeScreen() {
+  const [permission, requestPermission] = useCameraPermissions();
+  const ref = useRef<CameraView>(null);
+  const [uri, setUri] = useState<string | null>(null);
+  const [mode, setMode] = useState<CameraMode>("picture");
+  const [pictureMode, setPictureMode] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [totalCalories, setTotalCalories] = useState(0);
@@ -262,8 +268,121 @@ export default function HomeScreen() {
   }, []);
 
   const handleBarcodeScan = () => {
-    console.log('handleBarcodeScan');
+    // if (!permission?.granted) {
+    //   return (
+    //     <View style={styles.container}>
+    //       <Text style={{ textAlign: "center" }}>
+    //         We need your permission to use the camera
+    //       </Text>
+    //       <Button onPress={requestPermission} title="Grant permission" />
+    //     </View>
+    //   );
+    // }
+    setPictureMode(true);
   };
+
+  const takePicture = async () => {
+    const photo = await ref.current?.takePictureAsync();
+    setUri(photo?.uri || null);
+    // setPictureMode(false);
+    renderPicture();
+  };
+
+  const renderPicture = () => {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' }}>
+        <Image
+          source={{ uri: uri || '' }}
+          resizeMode="contain"
+          style={{ width: '100%', height: '80%' }}
+        />
+        <View style={{ flexDirection: 'row', justifyContent: 'space-evenly', width: '100%', marginTop: 16 }}>
+          <TouchableOpacity
+            style={{
+              backgroundColor: '#4CAF50',
+              paddingVertical: 14,
+              paddingHorizontal: 32,
+              borderRadius: 8,
+              marginHorizontal: 10,
+              flex: 1,
+              alignItems: 'center'
+            }}
+            onPress={() => {
+              // "Okay" button logic here (e.g., close preview, process image, etc.)
+              setPictureMode(false);
+            }}
+          >
+            <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold' }}>Use this</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={{
+              backgroundColor: '#f44336',
+              paddingVertical: 14,
+              paddingHorizontal: 32,
+              borderRadius: 8,
+              marginHorizontal: 10,
+              flex: 1,
+              alignItems: 'center'
+            }}
+            onPress={() => setUri(null)}
+          >
+            <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold' }}>Retake</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  };
+
+  const renderCamera = () => {
+    return (
+      <CameraView
+        style={styles.camera}
+        ref={ref}
+        mode={mode}
+        facing={"back"}
+        mute={false}
+        responsiveOrientationWhenOrientationLocked
+      >
+        <View style={styles.shutterContainer}>
+          <Pressable>
+            <Ionicons name="close" size={32} color="white" onPress={() => setPictureMode(false)}/>
+          </Pressable>
+          <Pressable onPress={takePicture}>
+            {({ pressed }) => (
+              <View
+                style={[
+                  styles.shutterBtn,
+                  {
+                    opacity: pressed ? 0.5 : 1,
+                  },
+                ]}
+              >
+                <View
+                  style={[
+                    styles.shutterBtnInner,
+                    {
+                      backgroundColor: mode === "picture" ? "white" : "red",
+                    },
+                  ]}
+                />
+              </View>
+            )}
+          </Pressable>
+          <Pressable>
+            <FontAwesome6 name="rotate-left" size={32} color="white" />
+          </Pressable>
+        </View>
+      </CameraView>
+    );
+  };
+
+  if(pictureMode) {
+    return (
+      <View style={styles.container}>
+        {uri ? renderPicture() : renderCamera()}
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -488,5 +607,34 @@ const styles = StyleSheet.create({
     height: 48,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  camera: {
+    flex: 1,
+    width: "100%",
+  },
+  shutterContainer: {
+    position: "absolute",
+    bottom: 44,
+    left: 0,
+    width: "100%",
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 30,
+  },
+  shutterBtn: {
+    backgroundColor: "transparent",
+    borderWidth: 5,
+    borderColor: "white",
+    width: 85,
+    height: 85,
+    borderRadius: 45,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  shutterBtnInner: {
+    width: 70,
+    height: 70,
+    borderRadius: 50,
   },
 });
