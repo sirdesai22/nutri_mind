@@ -261,6 +261,10 @@ export default function HomeScreen() {
     }
   }, []);
 
+  const handleBarcodeScan = () => {
+    console.log('handleBarcodeScan');
+  };
+
   return (
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: theme.background }]}
@@ -324,6 +328,22 @@ export default function HomeScreen() {
             placeholderTextColor={theme.text}
             editable={!isLoading}
           />
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            keyboardVerticalOffset={80}
+            style={{ justifyContent: 'flex-end' }}
+          >
+            <TouchableOpacity
+              style={[styles.sendButtonBarcode]}
+              onPress={handleBarcodeScan}
+              disabled={isLoading}>
+              <Ionicons 
+                name={"barcode-outline"} 
+                size={24} 
+                color={isLoading ? theme.text : '#4CAF50'} 
+              />
+            </TouchableOpacity>
+          </KeyboardAvoidingView>
           <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : "height"}
             keyboardVerticalOffset={80}
@@ -462,5 +482,11 @@ const styles = StyleSheet.create({
   },
   sendButtonDisabled: {
     opacity: 0.5,
+  },
+  sendButtonBarcode: {
+    width: 48,
+    height: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

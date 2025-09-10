@@ -1,12 +1,23 @@
-import { storage } from '@/utils/storage';
-import { Ionicons } from '@expo/vector-icons';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, Dimensions, Platform, RefreshControl, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { LineChart } from 'react-native-chart-kit';
-import { ThemeToggle } from '../components/ThemeToggle';
-import { useTheme } from '../context/ThemeContext';
-import { darkTheme, lightTheme } from '../theme/colors';
+import { storage } from "@/utils/storage";
+import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  Alert,
+  Dimensions,
+  Platform,
+  RefreshControl,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { LineChart } from "react-native-chart-kit";
+import { ThemeToggle } from "../components/ThemeToggle";
+import { useTheme } from "../context/ThemeContext";
+import { darkTheme, lightTheme } from "../theme/colors";
 
 interface DailyStats {
   date: string;
@@ -38,10 +49,10 @@ export default function DashboardScreen() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const dateStr = selectedDate.toISOString().split('T')[0];
-    
+      const dateStr = selectedDate.toISOString().split("T")[0];
+
       const data = await storage.getDailyData(dateStr);
-      
+
       if (data) {
         // Ensure all required fields exist with default values
         const safeData = {
@@ -50,38 +61,42 @@ export default function DashboardScreen() {
           totalCarbs: data.totalCarbs || 0,
           totalProtein: data.totalProtein || 0,
           totalFats: data.totalFats || 0,
-          meals: Array.isArray(data.meals) ? data.meals.map(meal => ({
-            time: meal.time || '',
-            food: meal.food || '',
-            calories: meal.calories || 0,
-            macros: {
-              carbs: meal.macros?.carbs || 0,
-              protein: meal.macros?.protein || 0,
-              fats: meal.macros?.fats || 0
-            }
-          })) : []
+          meals: Array.isArray(data.meals)
+            ? data.meals.map((meal) => ({
+                time: meal.time || "",
+                food: meal.food || "",
+                calories: meal.calories || 0,
+                macros: {
+                  carbs: meal.macros?.carbs || 0,
+                  protein: meal.macros?.protein || 0,
+                  fats: meal.macros?.fats || 0,
+                },
+              }))
+            : [],
         };
         setDailyStats(safeData);
       } else {
-        console.log('[Dashboard] No data found, setting default values');
+        console.log("[Dashboard] No data found, setting default values");
         setDailyStats({
           date: dateStr,
           totalCalories: 0,
           totalCarbs: 0,
           totalProtein: 0,
           totalFats: 0,
-          meals: []
+          meals: [],
         });
       }
 
       const weekly = await storage.getWeeklyData();
       // console.log('[Dashboard] Retrieved weekly data:', JSON.stringify(weekly, null, 2));
-      
+
       // Ensure weekly data is an array
       if (Array.isArray(weekly)) {
         setWeeklyData(weekly);
       } else {
-        console.log('[Dashboard] Invalid weekly data format, setting empty array');
+        console.log(
+          "[Dashboard] Invalid weekly data format, setting empty array"
+        );
         setWeeklyData([]);
       }
       // setDailyStats({
@@ -94,15 +109,15 @@ export default function DashboardScreen() {
       // });
       // setWeeklyData([]);
     } catch (error) {
-      console.error('[Dashboard] Error loading data:', error);
+      console.error("[Dashboard] Error loading data:", error);
       // Set default values on error
       setDailyStats({
-        date: selectedDate.toISOString().split('T')[0],
+        date: selectedDate.toISOString().split("T")[0],
         totalCalories: 0,
         totalCarbs: 0,
         totalProtein: 0,
         totalFats: 0,
-        meals: []
+        meals: [],
       });
       setWeeklyData([]);
     } finally {
@@ -111,9 +126,9 @@ export default function DashboardScreen() {
   };
 
   // // Refresh data when screen comes into focus
-useEffect(() => {
-  loadData();
-}, [selectedDate]);
+  useEffect(() => {
+    loadData();
+  }, [selectedDate]);
 
   //dummy data for chart
   // const chartData = {
@@ -124,8 +139,8 @@ useEffect(() => {
     try {
       if (!Array.isArray(weeklyData) || weeklyData.length === 0) {
         return {
-          labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-          datasets: [{ data: [0, 0, 0, 0, 0, 0, 0] }]
+          labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+          datasets: [{ data: [0, 0, 0, 0, 0, 0, 0] }],
         };
       }
 
@@ -137,34 +152,34 @@ useEffect(() => {
       const paddedData = [...weeklyData];
       while (paddedData.length < 7) {
         paddedData.push({
-          date: new Date().toISOString().split('T')[0],
+          date: new Date().toISOString().split("T")[0],
           totalCalories: 0,
           totalCarbs: 0,
           totalProtein: 0,
           totalFats: 0,
-          meals: []
+          meals: [],
         });
       }
 
       // Map the data to the correct days of the week
-      const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
       const adjustedData = weekDays.map((day, index) => {
-        const dataIndex = (index) % 7; // Shift the index to start from Monday
+        const dataIndex = index % 7; // Shift the index to start from Monday
         const dataPoint = paddedData[dataIndex];
-        return typeof dataPoint.totalCalories === 'number' 
-          ? Math.max(0, Math.min(dataPoint.totalCalories, 10000)) 
+        return typeof dataPoint.totalCalories === "number"
+          ? Math.max(0, Math.min(dataPoint.totalCalories, 10000))
           : 0;
       });
 
       return {
         labels: weekDays,
-        datasets: [{ data: adjustedData }]
+        datasets: [{ data: adjustedData }],
       };
     } catch (error) {
-      console.error('[Dashboard] Error preparing chart data:', error);
+      console.error("[Dashboard] Error preparing chart data:", error);
       return {
-        labels: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
-        datasets: [{ data: [0, 0, 0, 0, 0, 0, 0] }]
+        labels: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+        datasets: [{ data: [0, 0, 0, 0, 0, 0, 0] }],
       };
     }
   }, [weeklyData]);
@@ -177,20 +192,20 @@ useEffect(() => {
     barPercentage: 0.5,
     useShadowColorFromDataset: false,
     propsForDots: {
-      r: '6',
-      strokeWidth: '2',
-      stroke: '#4CAF50'
+      r: "6",
+      strokeWidth: "2",
+      stroke: "#4CAF50",
     },
     propsForBackgroundLines: {
       strokeWidth: 1,
       stroke: theme.border,
-      strokeDasharray: '0',
+      strokeDasharray: "0",
     },
     propsForLabels: {
       fontSize: 12,
-      fontWeight: '500',
+      fontWeight: "500",
       fill: theme.text,
-    }
+    },
   };
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
@@ -201,26 +216,26 @@ useEffect(() => {
   };
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric'
+    return date.toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
     });
   };
 
   const handleResetToday = async () => {
     // Alert.alert('Data reset!');
     Alert.alert(
-      'Reset All Data',
-      'Are you sure you want to reset ALL data? This will clear everything and cannot be undone.',
+      "Reset All Data",
+      "Are you sure you want to reset ALL data? This will clear everything and cannot be undone.",
       [
         {
-          text: 'Cancel',
-          style: 'cancel'
+          text: "Cancel",
+          style: "cancel",
         },
         {
-          text: 'Reset All',
-          style: 'destructive',
+          text: "Reset All",
+          style: "destructive",
           onPress: async () => {
             try {
               // Clear all data in storage
@@ -230,22 +245,28 @@ useEffect(() => {
               // Reload the data
               loadData();
             } catch (error) {
-              Alert.alert(
-                'Error',
-                'Failed to reset data. Please try again.',
-                [{ text: 'OK' }]
-              );
+              Alert.alert("Error", "Failed to reset data. Please try again.", [
+                { text: "OK" },
+              ]);
             }
-          }
-        }
+          },
+        },
       ]
     );
   };
 
   if (isLoading) {
     return (
-      <View style={[styles.container, styles.centerContent, { backgroundColor: theme.background }]}>
-        <Text style={[styles.loadingText, { color: theme.text }]}>Loading...</Text>
+      <View
+        style={[
+          styles.container,
+          styles.centerContent,
+          { backgroundColor: theme.background },
+        ]}
+      >
+        <Text style={[styles.loadingText, { color: theme.text }]}>
+          Loading...
+        </Text>
       </View>
     );
   }
@@ -253,22 +274,42 @@ useEffect(() => {
   // Ensure we have valid data before rendering
   if (!dailyStats) {
     return (
-      <View style={[styles.container, styles.centerContent, { backgroundColor: theme.background }]}>
-        <Text style={[styles.loadingText, { color: theme.text }]}>No data available</Text>
+      <View
+        style={[
+          styles.container,
+          styles.centerContent,
+          { backgroundColor: theme.background },
+        ]}
+      >
+        <Text style={[styles.loadingText, { color: theme.text }]}>
+          No data available
+        </Text>
       </View>
     );
   }
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={theme.background} />
-      <ScrollView 
+      <StatusBar
+        barStyle={isDark ? "light-content" : "dark-content"}
+        backgroundColor={theme.background}
+      />
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollViewContent}
-        refreshControl={<RefreshControl refreshing={isLoading} onRefresh={loadData} />}
+        refreshControl={
+          <RefreshControl refreshing={isLoading} onRefresh={loadData} />
+        }
       >
         <View style={[styles.header, { borderBottomColor: theme.border }]}>
-          <Text style={[styles.headerTitle, { color: theme.text, fontSize: 24, fontWeight: 'bold' }]}>Dashboard</Text>
+          <Text
+            style={[
+              styles.headerTitle,
+              { color: theme.text, fontSize: 24, fontWeight: "bold" },
+            ]}
+          >
+            Dashboard
+          </Text>
           <View style={styles.headerRight}>
             <ThemeToggle />
             {/* Reset All Data */}
@@ -276,8 +317,24 @@ useEffect(() => {
               <Ionicons name="refresh" size={24} color={theme.text} />
             </TouchableOpacity> */}
             {/* select date */}
-            <TouchableOpacity onPress={() => setShowDatePicker(true)} style={[styles.dateSelector, { backgroundColor: theme.cardSecondary, borderColor: theme.border }]}>
-              <Text style={[styles.dateText, { color: theme.text, fontSize: 16, fontWeight: 'bold' }]}>{formatDate(selectedDate)}</Text>
+            <TouchableOpacity
+              onPress={() => setShowDatePicker(true)}
+              style={[
+                styles.dateSelector,
+                {
+                  backgroundColor: theme.cardSecondary,
+                  borderColor: theme.border,
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.dateText,
+                  { color: theme.text, fontSize: 16, fontWeight: "bold" },
+                ]}
+              >
+                {formatDate(selectedDate)}
+              </Text>
               <Ionicons name="calendar" size={24} color={theme.text} />
             </TouchableOpacity>
           </View>
@@ -287,7 +344,7 @@ useEffect(() => {
           <DateTimePicker
             value={selectedDate}
             mode="date"
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            display={Platform.OS === "ios" ? "spinner" : "default"}
             onChange={handleDateChange}
             maximumDate={new Date()}
           />
@@ -302,7 +359,7 @@ useEffect(() => {
             <View style={styles.graph}>
               <LineChart
                 data={chartData}
-                width={Dimensions.get('window').width - 64}
+                width={Dimensions.get("window").width - 64}
                 height={220}
                 chartConfig={chartConfig}
                 bezier
@@ -321,36 +378,72 @@ useEffect(() => {
             </View>
           ) : (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyStateText}>No data available for this week</Text>
+              <Text style={styles.emptyStateText}>
+                No data available for this week
+              </Text>
             </View>
           )}
         </View>
 
         {/* Daily Summary */}
-        <View style={[styles.summaryContainer, { backgroundColor: theme.card }]}>
+        <View
+          style={[styles.summaryContainer, { backgroundColor: theme.card }]}
+        >
           <Text style={[styles.sectionTitle, { color: theme.text }]}>
             Daily Summary
           </Text>
           <View style={styles.statsGrid}>
-            <View style={[styles.statItem, { backgroundColor: theme.cardSecondary, borderColor: theme.border }]}>
+            <View
+              style={[
+                styles.statItem,
+                {
+                  backgroundColor: theme.cardSecondary,
+                  borderColor: theme.border,
+                },
+              ]}
+            >
               <Text style={styles.statValue}>
                 {Math.round(dailyStats.totalCalories || 0)}
               </Text>
               <Text style={styles.statLabel}>Calories</Text>
             </View>
-            <View style={[styles.statItem, { backgroundColor: theme.cardSecondary, borderColor: theme.border }]}>
+            <View
+              style={[
+                styles.statItem,
+                {
+                  backgroundColor: theme.cardSecondary,
+                  borderColor: theme.border,
+                },
+              ]}
+            >
               <Text style={styles.statValue}>
                 {Math.round(dailyStats.totalCarbs || 0)}g
               </Text>
               <Text style={styles.statLabel}>Carbs</Text>
             </View>
-            <View style={[styles.statItem, { backgroundColor: theme.cardSecondary, borderColor: theme.border }]}>
+            <View
+              style={[
+                styles.statItem,
+                {
+                  backgroundColor: theme.cardSecondary,
+                  borderColor: theme.border,
+                },
+              ]}
+            >
               <Text style={styles.statValue}>
                 {Math.round(dailyStats.totalProtein || 0)}g
               </Text>
               <Text style={styles.statLabel}>Protein</Text>
             </View>
-            <View style={[styles.statItem, { backgroundColor: theme.cardSecondary, borderColor: theme.border }]}>
+            <View
+              style={[
+                styles.statItem,
+                {
+                  backgroundColor: theme.cardSecondary,
+                  borderColor: theme.border,
+                },
+              ]}
+            >
               <Text style={styles.statValue}>
                 {Math.round(dailyStats.totalFats || 0)}g
               </Text>
@@ -360,28 +453,53 @@ useEffect(() => {
         </View>
 
         {/* Meal History */}
-        <View style={[styles.mealHistoryContainer, { backgroundColor: theme.card }]}>
+        <View
+          style={[styles.mealHistoryContainer, { backgroundColor: theme.card }]}
+        >
           <Text style={[styles.sectionTitle, { color: theme.text }]}>
             Meal History
           </Text>
           {Array.isArray(dailyStats.meals) && dailyStats.meals.length > 0 ? (
             dailyStats.meals.map((meal, index) => (
-              <View key={index} style={[styles.mealItem, { borderColor: theme.border, backgroundColor: theme.cardSecondary }]}>
+              <View
+                key={index}
+                style={[
+                  styles.mealItem,
+                  {
+                    borderColor: theme.border,
+                    backgroundColor: theme.cardSecondary,
+                  },
+                ]}
+              >
                 <View style={styles.mealTimeContainer}>
-                  <Text style={[styles.mealTime, { color: '#4CAF50' }]}>{meal.time || 'N/A'}</Text>
+                  <Text style={[styles.mealTime, { color: "#4CAF50" }]}>
+                    {meal.time || "N/A"}
+                  </Text>
                 </View>
                 <View style={styles.mealDetails}>
-                  <Text style={[styles.mealFood, { color: theme.text }]}>{meal.food.length > 30 ? meal.food.slice(0, 30) + '...' : meal.food}</Text>
+                  <Text style={[styles.mealFood, { color: theme.text }]}>
+                    {meal.food.length > 30
+                      ? meal.food.slice(0, 30) + "..."
+                      : meal.food}
+                  </Text>
                   <View style={styles.mealMacrosContainer}>
-                    <Text style={[styles.mealCalories, { color: theme.text }]}>{Math.round(meal.calories || 0)} cal</Text>
-                    <Text style={[styles.mealMacros, { color: theme.text }]}>{Math.round(meal.macros.carbs || 0)}g carbs, {Math.round(meal.macros.protein || 0)}g protein, {Math.round(meal.macros.fats || 0)}g fats</Text>
+                    <Text style={[styles.mealCalories, { color: theme.text }]}>
+                      {Math.round(meal.calories || 0)} cal
+                    </Text>
+                    <Text style={[styles.mealMacros, { color: theme.text }]}>
+                      {Math.round(meal.macros.carbs || 0)}g carbs,{" "}
+                      {Math.round(meal.macros.protein || 0)}g protein,{" "}
+                      {Math.round(meal.macros.fats || 0)}g fats
+                    </Text>
                   </View>
                 </View>
               </View>
             ))
           ) : (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyStateText}>No meals recorded for this day</Text>
+              <Text style={styles.emptyStateText}>
+                No meals recorded for this day
+              </Text>
             </View>
           )}
         </View>
@@ -401,44 +519,44 @@ const styles = StyleSheet.create({
     // paddingTop: Platform.OS === 'ios' ? 0 : StatusBar.currentHeight,
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 16,
   },
   resetButton: {
     padding: 8,
   },
   dateSelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
     padding: 8,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: "#F5F5F5",
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: "#E0E0E0",
   },
   dateText: {
-    color: '#333333',
+    color: "#333333",
   },
   graphContainer: {
     margin: 16,
     padding: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -454,9 +572,9 @@ const styles = StyleSheet.create({
   summaryContainer: {
     margin: 16,
     padding: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 12,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -467,41 +585,41 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: '600',
-    color: '#333333',
+    fontWeight: "600",
+    color: "#333333",
     marginBottom: 16,
   },
   statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
     gap: 16,
   },
   statItem: {
     flex: 1,
-    minWidth: '45%',
+    minWidth: "45%",
     padding: 16,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: "#F5F5F5",
     borderRadius: 12,
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: "#E0E0E0",
   },
   statValue: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#4CAF50',
+    fontWeight: "bold",
+    color: "#4CAF50",
     marginBottom: 4,
   },
   statLabel: {
-    color: '#666666',
+    color: "#666666",
   },
   mealHistoryContainer: {
     margin: 16,
     padding: 16,
     // backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 2,
@@ -511,55 +629,55 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   mealItem: {
-    flexDirection: 'row',
+    flexDirection: "row",
     padding: 12,
     borderRadius: 8,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#FFFFFF45',
+    borderColor: "#FFFFFF45",
   },
   mealTimeContainer: {
     width: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   mealTime: {
-    color: '#4CAF50',
-    fontWeight: '600',
+    color: "#4CAF50",
+    fontWeight: "600",
   },
   mealDetails: {
     flex: 1,
     marginLeft: 12,
   },
   mealFood: {
-    color: '#333333',
+    color: "#333333",
     marginBottom: 4,
   },
   mealCalories: {
-    color: '#666666',
+    color: "#666666",
     fontSize: 12,
   },
   mealMacrosContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   mealMacros: {
-    color: '#666666',
+    color: "#666666",
     fontSize: 12,
   },
   centerContent: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   emptyState: {
     padding: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   emptyStateText: {
-    color: '#666666',
+    color: "#666666",
   },
   loadingText: {
     fontSize: 16,
