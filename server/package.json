@@ -11,6 +11,8 @@
   "dependencies": {
     "@google/genai": "^0.13.0",
     "@supabase/supabase-js": "^2.47.0",
+    "@tabler/icons-react": "^3.30.0",
+    "framer-motion": "^12.36.0",
     "next": "16.1.6",
     "razorpay": "^2.9.2",
     "react": "19.2.3",
