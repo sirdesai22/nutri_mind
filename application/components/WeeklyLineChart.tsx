@@ -29,6 +29,31 @@ function buildPoints(data: number[], maxVal: number, width: number, drawHeight: 
   });
 }
 
+function buildSmoothPath(points: { x: number; y: number }[]) {
+  if (points.length === 0) return '';
+  if (points.length === 1) return `M ${points[0].x},${points[0].y}`;
+
+  const d: string[] = [];
+  d.push(`M ${points[0].x},${points[0].y}`);
+
+  // Catmull–Rom to cubic Bezier conversion for a smooth, monotone-ish curve.
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[i === 0 ? i : i - 1];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = points[i + 2 < points.length ? i + 2 : i + 1];
+
+    const c1x = p1.x + (p2.x - p0.x) / 6;
+    const c1y = p1.y + (p2.y - p0.y) / 6;
+    const c2x = p2.x - (p3.x - p1.x) / 6;
+    const c2y = p2.y - (p3.y - p1.y) / 6;
+
+    d.push(`C ${c1x},${c1y} ${c2x},${c2y} ${p2.x},${p2.y}`);
+  }
+
+  return d.join(' ');
+}
+
 export function WeeklyLineChart({
   data,
   maxValue,
@@ -44,7 +69,7 @@ export function WeeklyLineChart({
   const max = Math.max(maxValue, 1);
   const drawHeight = chartHeight - LABEL_H;
   const points = buildPoints(data, max, containerWidth, drawHeight);
-  const pathD = `M ${points.map((p) => `${p.x},${p.y}`).join(' L ')}`;
+  const smoothPath = buildSmoothPath(points);
   const graphWidth = containerWidth - PADDING.left - PADDING.right;
   const graphHeight = drawHeight - PADDING.top;
 
@@ -69,7 +94,7 @@ export function WeeklyLineChart({
         {points.length > 1 && (
           <Path
             d={
-              pathD +
+              smoothPath +
               ` L ${points[points.length - 1]?.x},${drawHeight}` +
               ` L ${points[0]?.x},${drawHeight} Z`
             }
@@ -104,7 +129,7 @@ export function WeeklyLineChart({
         {/* Trend line */}
         {points.length > 1 && (
           <Path
-            d={pathD}
+            d={smoothPath}
             fill="none"
             stroke={accentColor}
             strokeWidth={2.5}

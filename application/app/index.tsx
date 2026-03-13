@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { useAuth } from '@/hooks/useAuth';
 import { useConfigStore } from '@/store/configStore';
+import { useProfileStore } from '@/store/profileStore';
 
 const ONBOARDING_COMPLETE_KEY = 'onboarding_complete';
 
@@ -11,6 +12,7 @@ export default function IndexRedirect() {
   const { session, subscriptionStatus, isTrialActive, loading: authLoading } = useAuth();
   const { hydrate, mode, hasApiKey, isLoading: configLoading } = useConfigStore();
   const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null);
+  const profileComplete = useProfileStore((s) => s.profile.profileComplete);
 
   useEffect(() => {
     AsyncStorage.getItem(ONBOARDING_COMPLETE_KEY).then((v) => {
@@ -38,6 +40,10 @@ export default function IndexRedirect() {
 
   if (!session) {
     return <Redirect href="/auth" />;
+  }
+
+  if (!profileComplete) {
+    return <Redirect href="/profile-setup" />;
   }
 
   if (subscriptionStatus === 'lifetime') {

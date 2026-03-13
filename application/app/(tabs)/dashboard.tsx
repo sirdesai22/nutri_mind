@@ -1,7 +1,9 @@
 import { MealCard } from '@/components/MealCard';
 import { WeeklyBarChart } from '@/components/WeeklyBarChart';
 import { WeeklyLineChart } from '@/components/WeeklyLineChart';
+import { SkeletonShimmer } from '@/components/SkeletonShimmer';
 import { useMealStore } from '@/store/mealStore';
+import { useProfileStore } from '@/store/profileStore';
 import { useThemeStore } from '@/store/themeStore';
 import type { MealEntry } from '@/types/nutrition';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -21,13 +23,12 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { darkTheme, lightTheme } from '../theme/colors';
 import { fonts } from '../theme/typography';
 
 // ─── constants ─────────────────────────────────────────────────────────────
-
-const MACRO_TARGETS = { carbs: 250, protein: 150, fats: 65 };
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MEAL_DOTS = {
   Morning: '#F59E0B',
@@ -86,6 +87,7 @@ export default function ProgressScreen() {
 
   const { getDailyData, getWeeklyData, deleteMeal, updateMeal } = useMealStore();
   const allMealData = useMealStore((s) => s.data);
+  const { profile, setMacroTargets } = useProfileStore();
 
   const dateStr = selectedDate.toISOString().split('T')[0];
   const todayStr = new Date().toISOString().split('T')[0];
@@ -258,12 +260,42 @@ export default function ProgressScreen() {
   const totalProtein = Math.round(dailyData?.totalProtein ?? 0);
   const totalFats = Math.round(dailyData?.totalFats ?? 0);
 
+  const [macroModalOpen, setMacroModalOpen] = useState(false);
+  const [macroCaloriesInput, setMacroCaloriesInput] = useState(
+    String(profile.macroTargets.calories ?? 2000)
+  );
+  const [macroCarbsInput, setMacroCarbsInput] = useState(String(profile.macroTargets.carbs ?? 250));
+  const [macroProteinInput, setMacroProteinInput] = useState(
+    String(profile.macroTargets.protein ?? 150)
+  );
+  const [macroFatsInput, setMacroFatsInput] = useState(String(profile.macroTargets.fats ?? 65));
+
+  const macroTargets = profile.macroTargets;
+
   const calDiffLabel =
     calDiff === 0
       ? 'Same as yesterday'
       : calDiff > 0
       ? `+${calDiff} kcal more than yesterday`
       : `${Math.abs(calDiff)} kcal less than yesterday`;
+
+  const openMacroModal = () => {
+    setMacroCaloriesInput(String(macroTargets.calories ?? 2000));
+    setMacroCarbsInput(String(macroTargets.carbs ?? 250));
+    setMacroProteinInput(String(macroTargets.protein ?? 150));
+    setMacroFatsInput(String(macroTargets.fats ?? 65));
+    setMacroModalOpen(true);
+  };
+
+  const handleSaveMacroTargets = () => {
+    setMacroTargets({
+      calories: Number(macroCaloriesInput) || 2000,
+      carbs: Number(macroCarbsInput) || 250,
+      protein: Number(macroProteinInput) || 150,
+      fats: Number(macroFatsInput) || 65,
+    });
+    setMacroModalOpen(false);
+  };
 
   // ── render ──────────────────────────────────────────────────────────────
 
@@ -306,8 +338,18 @@ export default function ProgressScreen() {
           />
         )}
 
-        {/* ── WEEKLY CALORIES CARD ── */}
-        <View style={[styles.card, { backgroundColor: bgCard, borderColor: border }]}>
+        {isLoading ? (
+          <>
+            <SkeletonShimmer height={150} borderRadius={16} />
+            <SkeletonShimmer height={150} borderRadius={16} />
+            <SkeletonShimmer height={180} borderRadius={16} />
+          </>
+        ) : (
+          <>
+        <Animated.View
+          entering={FadeInDown.duration(260)}
+          style={[styles.card, { backgroundColor: bgCard, borderColor: border }]}
+        >
           <View style={styles.cardHeader}>
             <Text style={[styles.cardTitle, { color: textPrimary }]}>Weekly Calories</Text>
             <Text style={[styles.cardMeta, { color: textMuted }]}>
@@ -328,10 +370,12 @@ export default function ProgressScreen() {
             {bestDayName !== '—' ? ` · Best: ${bestDayName}` : ''}
             {' · '}{daysLogged}/7 days logged
           </Text>
-        </View>
+        </Animated.View>
 
-        {/* ── CALORIE TREND CARD ── */}
-        <View style={[styles.card, { backgroundColor: bgCard, borderColor: border }]}>
+        <Animated.View
+              entering={FadeInDown.delay(60).duration(260)}
+              style={[styles.card, { backgroundColor: bgCard, borderColor: border }]}
+            >
           <View style={styles.cardHeader}>
             <Text style={[styles.cardTitle, { color: textPrimary }]}>Calorie Trend</Text>
             <View style={[styles.chip, { backgroundColor: bgBase, borderColor: border }]}>
@@ -346,7 +390,7 @@ export default function ProgressScreen() {
             todayIndex={todayIdx}
             textMuted={textMuted}
             chartHeight={140}
-            goalCalories={2000}
+            goalCalories={macroTargets.calories}
           />
           <View style={styles.statPillsRow}>
             <View style={[styles.statPill, { backgroundColor: bgBase, borderColor: border }]}>
@@ -360,15 +404,26 @@ export default function ProgressScreen() {
               </Text>
             </View>
           </View>
-        </View>
+        </Animated.View>
 
-        {/* ── TODAY'S MACROS CARD ── */}
-        <View style={[styles.card, { backgroundColor: bgCard, borderColor: border }]}>
+        <Animated.View
+          entering={FadeInDown.delay(120).duration(260)}
+          style={[styles.card, { backgroundColor: bgCard, borderColor: border }]}
+        >
           <View style={styles.cardHeader}>
             <Text style={[styles.cardTitle, { color: textPrimary }]}>Today's Macros</Text>
-            <Text style={[styles.cardMeta, { color: textMuted }]}>
-              {formatDateChip(selectedDate)}
-            </Text>
+            <View style={styles.cardHeaderRight}>
+              <Text style={[styles.cardMeta, { color: textMuted }]}>
+                {formatDateChip(selectedDate)}
+              </Text>
+              <TouchableOpacity
+                onPress={openMacroModal}
+                hitSlop={10}
+                style={styles.iconButton}
+              >
+                <Ionicons name="pencil-outline" size={16} color={textMuted} />
+              </TouchableOpacity>
+            </View>
           </View>
           <View style={styles.calorieBigRow}>
             <Text style={[styles.calorieBigNum, { color: textPrimary }]}>{todayCalories}</Text>
@@ -376,9 +431,9 @@ export default function ProgressScreen() {
           </View>
           <View style={styles.macroColumns}>
             {[
-              { label: 'Carbs', value: totalCarbs, target: MACRO_TARGETS.carbs },
-              { label: 'Protein', value: totalProtein, target: MACRO_TARGETS.protein },
-              { label: 'Fats', value: totalFats, target: MACRO_TARGETS.fats },
+              { label: 'Carbs', value: totalCarbs, target: macroTargets.carbs },
+              { label: 'Protein', value: totalProtein, target: macroTargets.protein },
+              { label: 'Fats', value: totalFats, target: macroTargets.fats },
             ].map(({ label, value, target }) => {
               const pct = Math.min(100, Math.round((value / target) * 100));
               return (
@@ -406,10 +461,12 @@ export default function ProgressScreen() {
               No meals logged · Set goals →
             </Text>
           )}
-        </View>
+        </Animated.View>
 
-        {/* ── INSIGHTS CARD ── */}
-        <View style={[styles.card, { backgroundColor: bgCard, borderColor: border }]}>
+        <Animated.View
+          entering={FadeInDown.delay(180).duration(260)}
+          style={[styles.card, { backgroundColor: bgCard, borderColor: border }]}
+        >
           <Text style={[styles.cardTitle, { color: textPrimary }]}>Insights</Text>
           <View style={styles.insightsList}>
             <View style={styles.insightRow}>
@@ -446,10 +503,12 @@ export default function ProgressScreen() {
               </View>
             </View>
           </View>
-        </View>
+        </Animated.View>
 
-        {/* ── MEAL HISTORY CARD ── */}
-        <View style={[styles.card, { backgroundColor: bgCard, borderColor: border }]}>
+        <Animated.View
+          entering={FadeInDown.delay(240).duration(260)}
+          style={[styles.card, { backgroundColor: bgCard, borderColor: border }]}
+        >
           <View style={styles.cardHeader}>
             <Text style={[styles.cardTitle, { color: textPrimary }]}>Meal History</Text>
             <Text style={[styles.cardMeta, { color: textMuted }]}>
@@ -496,16 +555,18 @@ export default function ProgressScreen() {
               )}
             </View>
           ))}
-        </View>
+        </Animated.View>
 
-        {/* ── RESET ── */}
         <TouchableOpacity onPress={handleResetAll} style={styles.resetBtn}>
           <Ionicons name="trash-outline" size={16} color={textMuted} />
           <Text style={[styles.resetText, { color: textMuted }]}>Reset All Data</Text>
         </TouchableOpacity>
-      </ScrollView>
+        </>
+        )}
 
-      {/* ── EDIT MODAL ── */}
+        </ScrollView>
+
+
       <Modal
         visible={!!editing}
         transparent
@@ -580,6 +641,84 @@ export default function ProgressScreen() {
           </View>
         </View>
       </Modal>
+      {/* ── MACRO TARGETS MODAL ── */}
+      <Modal
+        visible={macroModalOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMacroModalOpen(false)}
+      >
+        <View style={styles.editOverlay}>
+          <View style={[styles.editCard, { backgroundColor: bgCard }]}>
+            <Text style={[styles.editTitle, { color: textPrimary }]}>daily goals</Text>
+            <View style={styles.editRow}>
+              <View style={styles.editCol}>
+                <Text style={[styles.editLabel, { color: textMuted }]}>Calories (kcal)</Text>
+                <TextInput
+                  style={[
+                    styles.editInputSmall,
+                    { borderColor: border, color: textPrimary, backgroundColor: bgBase },
+                  ]}
+                  value={macroCaloriesInput}
+                  onChangeText={setMacroCaloriesInput}
+                  keyboardType="numeric"
+                />
+              </View>
+            </View>
+            <View style={styles.editRow}>
+              <View style={styles.editCol}>
+                <Text style={[styles.editLabel, { color: textMuted }]}>Carbs (g)</Text>
+                <TextInput
+                  style={[
+                    styles.editInputSmall,
+                    { borderColor: border, color: textPrimary, backgroundColor: bgBase },
+                  ]}
+                  value={macroCarbsInput}
+                  onChangeText={setMacroCarbsInput}
+                  keyboardType="numeric"
+                />
+              </View>
+              <View style={styles.editCol}>
+                <Text style={[styles.editLabel, { color: textMuted }]}>Protein (g)</Text>
+                <TextInput
+                  style={[
+                    styles.editInputSmall,
+                    { borderColor: border, color: textPrimary, backgroundColor: bgBase },
+                  ]}
+                  value={macroProteinInput}
+                  onChangeText={setMacroProteinInput}
+                  keyboardType="numeric"
+                />
+              </View>
+            </View>
+            <View style={styles.editRow}>
+              <View style={styles.editCol}>
+                <Text style={[styles.editLabel, { color: textMuted }]}>Fats (g)</Text>
+                <TextInput
+                  style={[
+                    styles.editInputSmall,
+                    { borderColor: border, color: textPrimary, backgroundColor: bgBase },
+                  ]}
+                  value={macroFatsInput}
+                  onChangeText={setMacroFatsInput}
+                  keyboardType="numeric"
+                />
+              </View>
+            </View>
+            <View style={styles.editActions}>
+              <TouchableOpacity onPress={() => setMacroModalOpen(false)}>
+                <Text style={[styles.editCancelText, { color: textMuted }]}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.editSave, { backgroundColor: accent }]}
+                onPress={handleSaveMacroTargets}
+              >
+                <Text style={[styles.editSaveText, { color: bgBase }]}>Save goals</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -627,6 +766,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
+  },
+  cardHeaderRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   cardTitle: { fontFamily: fonts.manrope.bold, fontSize: 15 },
   cardMeta: { fontFamily: fonts.manrope.regular, fontSize: 13 },
@@ -779,4 +923,7 @@ const styles = StyleSheet.create({
   editCancelText: { fontFamily: fonts.manrope.medium, fontSize: 14 },
   editSave: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 999 },
   editSaveText: { fontFamily: fonts.syne.bold, fontSize: 15 },
+  iconButton: {
+    padding: 4,
+  },
 });

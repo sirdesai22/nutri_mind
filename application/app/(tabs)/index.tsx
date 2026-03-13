@@ -12,6 +12,7 @@ import * as Haptics from 'expo-haptics';
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   FlatList,
   Keyboard,
@@ -270,12 +271,16 @@ export default function TrackerScreen() {
               onSubmitEditing={() => Keyboard.dismiss()}
             />
             <TouchableOpacity
-              style={[styles.sendBtn, { backgroundColor: accent }]}
+              style={[styles.sendBtn, { backgroundColor: accent, opacity: isLoading || !inputText.trim() ? 0.5 : 1 }]}
               onPress={() => inputText.trim() && !isLoading && handleSend(inputText.trim())}
-              disabled={isLoading}
+              disabled={isLoading || !inputText.trim()}
               activeOpacity={0.85}
             >
-              <Ionicons name="arrow-up" size={22} color={accentFg} />
+              {isLoading ? (
+                <ActivityIndicator size="small" color={accentFg} />
+              ) : (
+                <Ionicons name="arrow-up" size={22} color={accentFg} />
+              )}
             </TouchableOpacity>
           </View>
         </View>
