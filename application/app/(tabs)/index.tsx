@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useFocusEffect } from '@react-navigation/native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -27,8 +28,8 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { darkTheme, lightTheme } from '../theme/colors';
-import { fonts } from '../theme/typography';
+import { darkTheme, lightTheme } from '@/theme/colors';
+import { fonts } from '@/theme/typography';
 
 interface EditingState {
   index: number;
@@ -45,6 +46,8 @@ export default function TrackerScreen() {
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [editing, setEditing] = useState<EditingState | null>(null);
+  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const isDark = useThemeStore((s) => s.isDark);
   const theme = isDark ? darkTheme : lightTheme;
@@ -67,8 +70,20 @@ export default function TrackerScreen() {
   const tabBarHeight = 56;
   const bottomInset = insets.bottom + tabBarHeight;
 
-  const today = new Date().toISOString().split('T')[0];
-  const dailyData = getDailyData(today);
+  const todayStr = new Date().toISOString().split('T')[0];
+  const yesterdayStr = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return d.toISOString().split('T')[0];
+  })();
+  const dateLabel =
+    selectedDate === todayStr
+      ? 'Today'
+      : selectedDate === yesterdayStr
+      ? 'Yesterday'
+      : new Date(selectedDate + 'T00:00:00').toLocaleDateString([], { weekday: 'short', day: 'numeric' });
+
+  const dailyData = getDailyData(selectedDate);
   const meals = dailyData?.meals ?? [];
   const totalCalories = dailyData?.totalCalories ?? 0;
   const totalMacros = {
@@ -103,7 +118,7 @@ export default function TrackerScreen() {
           calories: nutritionInfo.calories,
           macros: nutritionInfo.macros,
         };
-        await addMeal(today, newMeal);
+        await addMeal(selectedDate, newMeal);
         capture('meal_logged', { calories: nutritionInfo.calories });
         setInputText('');
       } catch (e) {
@@ -112,7 +127,7 @@ export default function TrackerScreen() {
         setIsLoading(false);
       }
     },
-    [mode, today, addMeal, getApiKey, capture]
+    [mode, selectedDate, addMeal, getApiKey, capture]
   );
 
   const handleDelete = useCallback(
@@ -120,9 +135,9 @@ export default function TrackerScreen() {
       if (Platform.OS !== 'web') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       }
-      await deleteMeal(today, index);
+      await deleteMeal(selectedDate, index);
     },
-    [today, deleteMeal]
+    [selectedDate, deleteMeal]
   );
 
   const handleEdit = useCallback((index: number, meal: MealEntry) => {
@@ -148,9 +163,9 @@ export default function TrackerScreen() {
         fats: Number(editing.fats) || 0,
       },
     };
-    await updateMeal(today, editing.index, meal);
+    await updateMeal(selectedDate, editing.index, meal);
     setEditing(null);
-  }, [editing, meals, today, updateMeal]);
+  }, [editing, meals, selectedDate, updateMeal]);
 
   if (!isConfigured()) {
     return (
@@ -208,9 +223,11 @@ export default function TrackerScreen() {
             <TouchableOpacity
               style={[styles.dateChip, { backgroundColor: bgCard }]}
               activeOpacity={0.7}
+              onPress={() => setShowDatePicker(true)}
             >
-              <Text style={[styles.dateChipText, { color: textMuted }]}>Today</Text>
-              <Ionicons name="chevron-forward" size={14} color={textMuted} />
+              <Ionicons name="calendar-outline" size={14} color={textMuted} style={{ marginRight: 2 }} />
+              <Text style={[styles.dateChipText, { color: textMuted }]}>{dateLabel}</Text>
+              <Ionicons name="chevron-down" size={14} color={textMuted} />
             </TouchableOpacity>
             <TouchableOpacity onPress={() => router.push('/setup')} hitSlop={16} style={styles.settingsIcon}>
               <Ionicons name="settings-outline" size={18} color={textMuted} />
@@ -285,6 +302,40 @@ export default function TrackerScreen() {
           </View>
         </View>
       </View>
+
+      {/* Date picker modal */}
+      <Modal visible={showDatePicker} transparent animationType="fade" onRequestClose={() => setShowDatePicker(false)}>
+        <TouchableOpacity
+          style={styles.datePickerOverlay}
+          activeOpacity={1}
+          onPress={() => setShowDatePicker(false)}
+        >
+          <TouchableOpacity activeOpacity={1} onPress={() => {}}>
+            <View style={[styles.datePickerCard, { backgroundColor: bgSurface }]}>
+              <Text style={[styles.datePickerTitle, { color: textPrimary }]}>Select date</Text>
+              <DateTimePicker
+                value={new Date(selectedDate + 'T00:00:00')}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'inline' : 'default'}
+                maximumDate={new Date()}
+                themeVariant={isDark ? 'dark' : 'light'}
+                onChange={(event, date) => {
+                  if (Platform.OS === 'android') setShowDatePicker(false);
+                  if (date) setSelectedDate(date.toISOString().split('T')[0]);
+                }}
+              />
+              {Platform.OS === 'ios' && (
+                <TouchableOpacity
+                  style={[styles.datePickerDone, { backgroundColor: accent }]}
+                  onPress={() => setShowDatePicker(false)}
+                >
+                  <Text style={[styles.datePickerDoneText, { color: accentFg }]}>Done</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
 
       <Modal visible={!!editing} transparent animationType="fade" onRequestClose={() => setEditing(null)}>
         <View style={styles.editOverlay}>
@@ -476,4 +527,32 @@ const styles = StyleSheet.create({
   editCancelText: { fontFamily: fonts.manrope.medium, fontSize: 14 },
   editSave: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 999 },
   editSaveText: { fontFamily: fonts.syne.bold, fontSize: 15 },
+  datePickerOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  datePickerCard: {
+    borderRadius: 20,
+    padding: 20,
+    width: '100%',
+    alignItems: 'center',
+  },
+  datePickerTitle: {
+    fontFamily: fonts.syne.bold,
+    fontSize: 18,
+    marginBottom: 12,
+    alignSelf: 'flex-start',
+  },
+  datePickerDone: {
+    marginTop: 12,
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 999,
+    alignSelf: 'stretch',
+    alignItems: 'center',
+  },
+  datePickerDoneText: { fontFamily: fonts.syne.bold, fontSize: 15 },
 });
