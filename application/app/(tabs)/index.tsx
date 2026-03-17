@@ -3,6 +3,7 @@ import { analyzeFood } from '@/services/nutritionService';
 import { useAnalytics } from '@/context/AnalyticsContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useConfigStore } from '@/store/configStore';
+import { useDateStore } from '@/store/dateStore';
 import { useMealStore } from '@/store/mealStore';
 import { useThemeStore } from '@/store/themeStore';
 import type { MealEntry } from '@/types/nutrition';
@@ -46,7 +47,8 @@ export default function TrackerScreen() {
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [editing, setEditing] = useState<EditingState | null>(null);
-  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const selectedDate = useDateStore((s) => s.selectedDate);
+  const setSelectedDate = useDateStore((s) => s.setSelectedDate);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   const isDark = useThemeStore((s) => s.isDark);

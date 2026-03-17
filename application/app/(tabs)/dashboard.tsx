@@ -2,6 +2,7 @@ import { MealCard } from '@/components/MealCard';
 import { WeeklyBarChart } from '@/components/WeeklyBarChart';
 import { WeeklyLineChart } from '@/components/WeeklyLineChart';
 import { SkeletonShimmer } from '@/components/SkeletonShimmer';
+import { useDateStore } from '@/store/dateStore';
 import { useMealStore } from '@/store/mealStore';
 import { useProfileStore } from '@/store/profileStore';
 import { useThemeStore } from '@/store/themeStore';
@@ -12,6 +13,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Modal,
+  PanResponder,
   Platform,
   RefreshControl,
   ScrollView,
@@ -24,9 +26,9 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { ThemeToggle } from '../components/ThemeToggle';
-import { darkTheme, lightTheme } from '../theme/colors';
-import { fonts } from '../theme/typography';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { darkTheme, lightTheme } from '@/theme/colors';
+import { fonts } from '@/theme/typography';
 
 // ─── constants ─────────────────────────────────────────────────────────────
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -59,8 +61,10 @@ function groupMealsByTime(meals: MealEntry[]): Record<string, MealEntry[]> {
 // ─── component ─────────────────────────────────────────────────────────────
 
 export default function ProgressScreen() {
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const selectedDate = useDateStore((s) => s.selectedDate); // YYYY-MM-DD string
+  const setSelectedDate = useDateStore((s) => s.setSelectedDate);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [weekOffset, setWeekOffset] = useState(0); // 0 = current week, -1 = last week
   const [isLoading, setIsLoading] = useState(false);
   const [editing, setEditing] = useState<{
     index: number;
@@ -85,23 +89,35 @@ export default function ProgressScreen() {
   const insets = useSafeAreaInsets();
   const tabBarHeight = 56;
 
-  const { getDailyData, getWeeklyData, deleteMeal, updateMeal } = useMealStore();
+  const { getDailyData, getWeeklyDataForOffset, deleteMeal, updateMeal } = useMealStore();
   const allMealData = useMealStore((s) => s.data);
   const { profile, setMacroTargets } = useProfileStore();
 
-  const dateStr = selectedDate.toISOString().split('T')[0];
+  const dateStr = selectedDate;
   const todayStr = new Date().toISOString().split('T')[0];
-  const yesterdayStr = useMemo(() => {
-    const y = new Date();
-    y.setDate(y.getDate() - 1);
-    return y.toISOString().split('T')[0];
-  }, []);
 
   const dailyData = getDailyData(dateStr);
-  const weeklyData = getWeeklyData();
+  const weeklyData = getWeeklyDataForOffset(weekOffset);
 
-  const todayIndex = weeklyData.findIndex((d) => d.date === todayStr);
-  const todayIdx = todayIndex >= 0 ? todayIndex : new Date().getDay();
+  // Dates for the currently displayed week (used for selectedIdx + week label)
+  const weekDates = useMemo(() => {
+    const today = new Date();
+    const start = new Date(today);
+    start.setDate(today.getDate() - today.getDay() + weekOffset * 7);
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      return d.toISOString().split('T')[0];
+    });
+  }, [weekOffset]);
+
+  const weekLabel = useMemo(() => {
+    const fmt = (s: string) =>
+      new Date(s + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    return `${fmt(weekDates[0])} – ${fmt(weekDates[6])}`;
+  }, [weekDates]);
+
+  const selectedIdx = weekDates.indexOf(dateStr);
 
   // ── weekly chart values ──
   const barChartValues = useMemo(() => {
@@ -127,12 +143,18 @@ export default function ProgressScreen() {
   const peakCalories = useMemo(() => Math.max(0, ...barChartValues), [barChartValues]);
 
   // ── insights ──
+  const prevDateStr = useMemo(() => {
+    const d = new Date(dateStr + 'T00:00:00');
+    d.setDate(d.getDate() - 1);
+    return d.toISOString().split('T')[0];
+  }, [dateStr]);
+
   const calDiff = Math.round(
-    (allMealData[todayStr]?.totalCalories ?? 0) - (allMealData[yesterdayStr]?.totalCalories ?? 0)
+    (allMealData[dateStr]?.totalCalories ?? 0) - (allMealData[prevDateStr]?.totalCalories ?? 0)
   );
 
   const bestMacroInsight = useMemo(() => {
-    const td = allMealData[todayStr];
+    const td = allMealData[dateStr];
     if (!td) return null;
     const candidates = [
       { name: 'Carbs', value: td.totalCarbs ?? 0 },
@@ -140,7 +162,7 @@ export default function ProgressScreen() {
       { name: 'Fats', value: td.totalFats ?? 0 },
     ];
     return candidates.reduce((a, b) => (a.value > b.value ? a : b));
-  }, [allMealData, todayStr]);
+  }, [allMealData, dateStr]);
 
   const streakDays = useMemo(() => {
     let count = 0;
@@ -181,18 +203,50 @@ export default function ProgressScreen() {
 
   useEffect(() => { loadData(); }, [selectedDate, loadData]);
 
+  // When selectedDate changes (e.g. from Tracker tab), sync weekOffset to show that week
+  useEffect(() => {
+    const today = new Date();
+    const todayWeekStart = new Date(today);
+    todayWeekStart.setDate(today.getDate() - today.getDay());
+    const selDate = new Date(dateStr + 'T00:00:00');
+    const selWeekStart = new Date(selDate);
+    selWeekStart.setDate(selDate.getDate() - selDate.getDay());
+    const diffMs = selWeekStart.getTime() - todayWeekStart.getTime();
+    const diffWeeks = Math.round(diffMs / (7 * 24 * 60 * 60 * 1000));
+    setWeekOffset(diffWeeks);
+  }, [dateStr]);
+
+  const chartPanResponder = useMemo(() => PanResponder.create({
+    onMoveShouldSetPanResponder: (_, g) =>
+      Math.abs(g.dx) > Math.abs(g.dy) * 1.2 && Math.abs(g.dx) > 12,
+    onPanResponderRelease: (_, g) => {
+      if (g.dx < -40) {
+        // swipe left → older week
+        setWeekOffset((prev) => prev - 1);
+      } else if (g.dx > 40) {
+        // swipe right → newer week (max = 0, can't go into the future)
+        setWeekOffset((prev) => Math.min(0, prev + 1));
+      }
+    },
+  }), []);
+
+  const handleBarPress = useCallback((index: number) => {
+    if (index >= 0 && index < weekDates.length) {
+      setSelectedDate(weekDates[index]);
+    }
+  }, [weekDates, setSelectedDate]);
+
   const handleDateChange = (_: unknown, date?: Date) => {
     setShowDatePicker(false);
-    if (date) setSelectedDate(date);
+    if (date) setSelectedDate(date.toISOString().split('T')[0]);
   };
 
-  const formatDateChip = (date: Date) => {
-    const d = date.toISOString().split('T')[0];
+  const formatDateChip = (dateStr: string) => {
     const t = new Date().toISOString().split('T')[0];
     const y = new Date(Date.now() - 864e5).toISOString().split('T')[0];
-    if (d === t) return 'Today';
-    if (d === y) return 'Yesterday';
-    return date.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' });
+    if (dateStr === t) return 'Today';
+    if (dateStr === y) return 'Yesterday';
+    return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' });
   };
 
   const handleResetAll = () => {
@@ -203,7 +257,7 @@ export default function ProgressScreen() {
         style: 'destructive',
         onPress: async () => {
           await useMealStore.getState().clearAll();
-          setSelectedDate(new Date());
+          setSelectedDate(new Date().toISOString().split('T')[0]);
           loadData();
         },
       },
@@ -274,10 +328,10 @@ export default function ProgressScreen() {
 
   const calDiffLabel =
     calDiff === 0
-      ? 'Same as yesterday'
+      ? 'Same as previous day'
       : calDiff > 0
-      ? `+${calDiff} kcal more than yesterday`
-      : `${Math.abs(calDiff)} kcal less than yesterday`;
+      ? `+${calDiff} kcal more than previous day`
+      : `${Math.abs(calDiff)} kcal less than previous day`;
 
   const openMacroModal = () => {
     setMacroCaloriesInput(String(macroTargets.calories ?? 2000));
@@ -330,7 +384,7 @@ export default function ProgressScreen() {
       >
         {showDatePicker && (
           <DateTimePicker
-            value={selectedDate}
+            value={new Date(selectedDate + 'T00:00:00')}
             mode="date"
             display={Platform.OS === 'ios' ? 'spinner' : 'default'}
             onChange={handleDateChange}
@@ -349,6 +403,7 @@ export default function ProgressScreen() {
         <Animated.View
           entering={FadeInDown.duration(260)}
           style={[styles.card, { backgroundColor: bgCard, borderColor: border }]}
+          {...chartPanResponder.panHandlers}
         >
           <View style={styles.cardHeader}>
             <Text style={[styles.cardTitle, { color: textPrimary }]}>Weekly Calories</Text>
@@ -356,14 +411,37 @@ export default function ProgressScreen() {
               {weeklyTotal.toLocaleString()} kcal
             </Text>
           </View>
+
+          {/* Week navigation */}
+          <View style={styles.weekNav}>
+            <TouchableOpacity
+              onPress={() => setWeekOffset((p) => p - 1)}
+              hitSlop={12}
+              style={styles.weekNavBtn}
+            >
+              <Ionicons name="chevron-back" size={16} color={textMuted} />
+            </TouchableOpacity>
+            <Text style={[styles.weekNavLabel, { color: textMuted }]}>{weekLabel}</Text>
+            <TouchableOpacity
+              onPress={() => setWeekOffset((p) => Math.min(0, p + 1))}
+              hitSlop={12}
+              style={[styles.weekNavBtn, weekOffset >= 0 && styles.weekNavBtnDisabled]}
+              disabled={weekOffset >= 0}
+            >
+              <Ionicons name="chevron-forward" size={16} color={weekOffset >= 0 ? 'transparent' : textMuted} />
+            </TouchableOpacity>
+          </View>
+
           <WeeklyBarChart
             data={barChartValues}
             maxValue={maxBar}
             accentColor={accent}
-            barColor={bgBase}
-            todayIndex={todayIdx}
+            barColor={border}
+            inactiveBarColor={isDark ? 'rgba(168,255,107,0.18)' : 'rgba(45,122,45,0.18)'}
+            todayIndex={selectedIdx}
             textMuted={textMuted}
             chartHeight={160}
+            onBarPress={handleBarPress}
           />
           <Text style={[styles.chartSummary, { color: textMuted }]}>
             Avg {weeklyAvg} kcal/day
@@ -375,11 +453,12 @@ export default function ProgressScreen() {
         <Animated.View
               entering={FadeInDown.delay(60).duration(260)}
               style={[styles.card, { backgroundColor: bgCard, borderColor: border }]}
+              {...chartPanResponder.panHandlers}
             >
           <View style={styles.cardHeader}>
             <Text style={[styles.cardTitle, { color: textPrimary }]}>Calorie Trend</Text>
             <View style={[styles.chip, { backgroundColor: bgBase, borderColor: border }]}>
-              <Text style={[styles.chipText, { color: textMuted }]}>This Week</Text>
+              <Text style={[styles.chipText, { color: textMuted }]}>{weekLabel}</Text>
             </View>
           </View>
           <WeeklyLineChart
@@ -387,7 +466,7 @@ export default function ProgressScreen() {
             maxValue={maxBar}
             accentColor={accent}
             lineColor={textMuted}
-            todayIndex={todayIdx}
+            todayIndex={selectedIdx}
             textMuted={textMuted}
             chartHeight={140}
             goalCalories={macroTargets.calories}
@@ -473,7 +552,7 @@ export default function ProgressScreen() {
               <Text style={styles.insightIcon}>🔥</Text>
               <View style={styles.insightBody}>
                 <Text style={[styles.insightLabel, { color: textMuted }]}>
-                  Calories vs yesterday
+                  Calories vs previous day
                 </Text>
                 <Text style={[styles.insightValue, { color: textPrimary }]}>{calDiffLabel}</Text>
               </View>
@@ -774,6 +853,17 @@ const styles = StyleSheet.create({
   },
   cardTitle: { fontFamily: fonts.manrope.bold, fontSize: 15 },
   cardMeta: { fontFamily: fonts.manrope.regular, fontSize: 13 },
+
+  // Week navigation
+  weekNav: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  weekNavBtn: { padding: 4 },
+  weekNavBtnDisabled: { opacity: 0 },
+  weekNavLabel: { fontFamily: fonts.manrope.medium, fontSize: 12 },
 
   // Chart summary
   chartSummary: {

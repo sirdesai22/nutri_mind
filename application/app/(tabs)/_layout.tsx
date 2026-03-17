@@ -6,8 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { HapticTab } from '@/components/HapticTab';
 import { useThemeStore } from '@/store/themeStore';
-import { darkTheme, lightTheme } from '../theme/colors';
-import { fonts } from '../theme/typography';
+import { darkTheme, lightTheme } from '@/theme/colors';
+import { fonts } from '@/theme/typography';
 
 const TAB_BAR_HEIGHT = 56;
 
@@ -16,25 +16,21 @@ function TabIcon({
   focusedName,
   focused,
   color,
-  accentColor,
 }: {
   name: React.ComponentProps<typeof Ionicons>['name'];
   focusedName: React.ComponentProps<typeof Ionicons>['name'];
   focused: boolean;
   color: string;
-  accentColor: string;
 }) {
   return (
     <View style={tabIconStyles.wrap}>
       <Ionicons name={focused ? focusedName : name} size={22} color={color} />
-      {focused && <View style={[tabIconStyles.dot, { backgroundColor: accentColor }]} />}
     </View>
   );
 }
 
 const tabIconStyles = StyleSheet.create({
-  wrap: { alignItems: 'center', justifyContent: 'center', position: 'relative' },
-  dot: { width: 4, height: 4, borderRadius: 2, marginTop: 3 },
+  wrap: { alignItems: 'center', justifyContent: 'center' },
 });
 
 export default function TabLayout() {
@@ -74,13 +70,7 @@ export default function TabLayout() {
           options={{
             title: 'Tracker',
             tabBarIcon: ({ color, focused }) => (
-              <TabIcon
-                name="restaurant-outline"
-                focusedName="restaurant"
-                focused={focused}
-                color={color}
-                accentColor={theme.accent}
-              />
+              <TabIcon name="restaurant-outline" focusedName="restaurant" focused={focused} color={color} />
             ),
           }}
         />
@@ -89,13 +79,7 @@ export default function TabLayout() {
           options={{
             title: 'Progress',
             tabBarIcon: ({ color, focused }) => (
-              <TabIcon
-                name="analytics-outline"
-                focusedName="analytics"
-                focused={focused}
-                color={color}
-                accentColor={theme.accent}
-              />
+              <TabIcon name="analytics-outline" focusedName="analytics" focused={focused} color={color} />
             ),
           }}
         />
@@ -104,13 +88,7 @@ export default function TabLayout() {
           options={{
             title: 'Profile',
             tabBarIcon: ({ color, focused }) => (
-              <TabIcon
-                name="person-outline"
-                focusedName="person"
-                focused={focused}
-                color={color}
-                accentColor={theme.accent}
-              />
+              <TabIcon name="person-outline" focusedName="person" focused={focused} color={color} />
             ),
           }}
         />

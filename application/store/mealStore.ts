@@ -10,6 +10,7 @@ interface MealState {
   loadAll: () => Promise<void>;
   getDailyData: (date: string) => DailyData | null;
   getWeeklyData: () => DailyData[];
+  getWeeklyDataForOffset: (weekOffset: number) => DailyData[];
   saveDailyData: (date: string, data: DailyData) => Promise<void>;
   addMeal: (date: string, meal: MealEntry) => Promise<void>;
   deleteMeal: (date: string, mealIndex: number) => Promise<void>;
@@ -17,10 +18,10 @@ interface MealState {
   clearAll: () => Promise<void>;
 }
 
-function getWeekDates(): string[] {
+function getWeekDates(weekOffset = 0): string[] {
   const today = new Date();
   const weekStart = new Date(today);
-  weekStart.setDate(today.getDate() - today.getDay());
+  weekStart.setDate(today.getDate() - today.getDay() + weekOffset * 7);
   const dates: string[] = [];
   for (let i = 0; i < 7; i++) {
     const d = new Date(weekStart);
@@ -60,7 +61,12 @@ export const useMealStore = create<MealState>()(
 
       getWeeklyData: () => {
         const { data } = get();
-        return getWeekDates().map((dateStr) => data[dateStr] ?? emptyDaily(dateStr));
+        return getWeekDates(0).map((dateStr) => data[dateStr] ?? emptyDaily(dateStr));
+      },
+
+      getWeeklyDataForOffset: (weekOffset) => {
+        const { data } = get();
+        return getWeekDates(weekOffset).map((dateStr) => data[dateStr] ?? emptyDaily(dateStr));
       },
 
       saveDailyData: async (date, dailyData) => {

@@ -12,9 +12,11 @@ interface WeeklyBarChartProps {
   maxValue: number;
   accentColor: string;
   barColor: string;
+  inactiveBarColor?: string;
   todayIndex: number;
   textMuted: string;
   chartHeight?: number;
+  onBarPress?: (index: number) => void;
 }
 
 export function WeeklyBarChart({
@@ -22,10 +24,13 @@ export function WeeklyBarChart({
   maxValue,
   accentColor,
   barColor,
+  inactiveBarColor,
   todayIndex,
   textMuted,
   chartHeight = DEFAULT_HEIGHT,
+  onBarPress,
 }: WeeklyBarChartProps) {
+  const inactiveColor = inactiveBarColor ?? barColor;
   const [pressedIdx, setPressedIdx] = useState<number | null>(null);
   const max = Math.max(maxValue, 1);
   const { width } = Dimensions.get('window');
@@ -64,9 +69,12 @@ export function WeeklyBarChart({
                 height={barH}
                 rx={8}
                 ry={8}
-                fill={isToday ? accentColor : barColor}
-                opacity={isToday ? 1 : 0.65}
-                onPress={() => setPressedIdx(pressedIdx === i ? null : i)}
+                fill={isToday ? accentColor : inactiveColor}
+                opacity={isToday ? 1 : 0.75}
+                onPress={() => {
+                  setPressedIdx(pressedIdx === i ? null : i);
+                  onBarPress?.(i);
+                }}
               />
               {showLabel && value > 0 && (
                 <SvgText
