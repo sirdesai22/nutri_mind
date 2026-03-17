@@ -186,13 +186,9 @@ export default function Home() {
           <FadeUp delay={0.3}>
             <div className="relative hidden w-full items-center justify-center md:flex md:w-[45%]">
               <div className="absolute inset-auto h-64 w-64 rounded-full bg-[radial-gradient(circle_at_center,rgba(168,255,107,0.08)_0%,transparent_70%)] blur-3xl" />
-              <div className="relative">
-                {/* Replace src with your app screenshot */}
-                <img
-                  src="/app-screenshot.png"
-                  alt="NutriMind app screenshot"
-                  className="relative z-10 w-[300px] rounded-[32px] shadow-[0_30px_80px_rgba(0,0,0,0.75)]"
-                />
+              <div className="relative z-10 flex h-[540px] w-[270px] flex-col items-center justify-center gap-3 rounded-[36px] border border-[rgba(168,255,107,0.12)] bg-[#131A17] shadow-[0_30px_80px_rgba(0,0,0,0.75)]">
+                <div className="h-10 w-10 rounded-full border border-dashed border-[rgba(168,255,107,0.3)]" />
+                <p className="text-[12px] text-[#566356]">Screenshot coming soon</p>
               </div>
             </div>
           </FadeUp>
@@ -324,12 +320,10 @@ export default function Home() {
             <div className="pointer-events-none absolute inset-x-0 top-1/2 -z-10 h-80 -translate-y-1/2 bg-[radial-gradient(circle_at_center,rgba(168,255,107,0.08)_0%,transparent_70%)] blur-3xl" />
 
             <FadeUp delay={0.1}>
-              {/* Replace src with your app demo screenshot */}
-              <img
-                src="/app-demo.png"
-                alt="NutriMind app in action"
-                className="relative z-10 w-full max-w-[880px] rounded-[24px] border border-[rgba(168,255,107,0.10)] shadow-[0_40px_100px_rgba(0,0,0,0.8)]"
-              />
+              <div className="relative z-10 flex h-[460px] w-full max-w-[880px] flex-col items-center justify-center gap-3 rounded-[24px] border border-[rgba(168,255,107,0.10)] bg-[#131A17] shadow-[0_40px_100px_rgba(0,0,0,0.8)]">
+                <div className="h-12 w-12 rounded-full border border-dashed border-[rgba(168,255,107,0.3)]" />
+                <p className="text-[13px] text-[#566356]">Screenshots coming soon</p>
+              </div>
             </FadeUp>
           </div>
         </section>
@@ -499,172 +493,6 @@ export default function Home() {
           </div>
         </div>
       </footer>
-    </div>
-  );
-}
-
-
-
-function TrackerPhone() {
-  return (
-    <PhoneFrame>
-      <header className="mb-4 flex items-center justify-between">
-        <div className="space-y-1">
-          <p className="text-[12px] uppercase tracking-[0.2em] text-[#566356]">
-            Tracker
-          </p>
-          <p className="font-[var(--font-syne)] text-[16px] text-[#EFF5F0]">
-            Today
-          </p>
-        </div>
-        <span className="rounded-full bg-[#1C2620] px-3 py-1 text-[11px] text-[#A8B8A8]">
-          27 Mar
-        </span>
-      </header>
-
-      <div className="rounded-2xl bg-[#131A17] p-4">
-        <p className="text-[12px] text-[#566356]">Total calories</p>
-        <p className="mt-1 font-[var(--font-syne)] text-[40px] leading-none text-[#EFF5F0]">
-          1840
-        </p>
-        <p className="mt-1 text-[12px] text-[#566356]">kcal of 2100 goal</p>
-        <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[#1C2620]">
-          <div className="h-full w-[80%] rounded-full bg-[#A8FF6B]" />
-        </div>
-      </div>
-
-      <div className="mt-4 grid grid-cols-3 gap-2 text-[10px]">
-        <MacroPill label="Carbs" value="220g" />
-        <MacroPill label="Protein" value="148g" />
-        <MacroPill label="Fats" value="52g" />
-      </div>
-
-      <div className="mt-4 space-y-2 text-[12px]">
-        <MealRow name="Chicken rice bowl" calories="520 kcal" />
-        <MealRow name="Protein shake" calories="240 kcal" />
-        <MealRow name="Avocado toast" calories="310 kcal" />
-      </div>
-
-      <div className="mt-auto flex items-center gap-2 pt-4">
-        <div className="flex-1 rounded-full bg-[#131A17] px-4 py-2 text-[11px] text-[#566356]">
-          what did you eat?
-        </div>
-        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#A8FF6B]">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#0D1210]" />
-        </div>
-      </div>
-    </PhoneFrame>
-  );
-}
-
-function ProgressPhone() {
-  return (
-    <PhoneFrame>
-      <header className="mb-4 flex items-center justify-between">
-        <div className="space-y-1">
-          <p className="text-[12px] uppercase tracking-[0.2em] text-[#566356]">
-            Progress
-          </p>
-          <p className="font-[var(--font-syne)] text-[16px] text-[#EFF5F0]">
-            This week
-          </p>
-        </div>
-        <span className="rounded-full bg-[#1C2620] px-3 py-1 text-[11px] text-[#A8B8A8]">
-          Today
-        </span>
-      </header>
-
-      <div className="rounded-2xl bg-[#131A17] p-4">
-        <p className="text-[12px] text-[#566356]">Calories</p>
-        <div className="mt-3 flex items-end justify-between gap-1">
-          {[60, 48, 52, 40, 56, 44, 80].map((h, idx) => (
-            <div
-              // eslint-disable-next-line react/no-array-index-key
-              key={idx}
-              className="flex-1 rounded-full bg-[#1C2620]"
-            >
-              <div
-                className={`mx-auto w-[60%] rounded-full ${
-                  idx === 6 ? "bg-[#A8FF6B]" : "bg-[#3B4A3D]"
-                }`}
-                style={{ height: `${h}%` }}
-              />
-            </div>
-          ))}
-        </div>
-        <div className="mt-2 flex items-center justify-between text-[10px] text-[#566356]">
-          <span>Mon</span>
-          <span>Tue</span>
-          <span>Wed</span>
-          <span>Thu</span>
-          <span>Fri</span>
-          <span>Sat</span>
-          <span>Sun</span>
-        </div>
-      </div>
-
-      <div className="mt-4 grid grid-cols-2 gap-2 text-[11px]">
-        <StatCard label="Today" value="1840 kcal" />
-        <StatCard label="Carbs" value="220 g" />
-        <StatCard label="Protein" value="148 g" />
-        <StatCard label="Fats" value="52 g" />
-      </div>
-    </PhoneFrame>
-  );
-}
-
-function OnboardingPhone() {
-  return (
-    <PhoneFrame>
-      <div className="flex h-full flex-col justify-between">
-        <div className="mt-6 space-y-4">
-          <p className="text-[11px] uppercase tracking-[0.22em] text-[#566356]">
-            Welcome to NutriMind
-          </p>
-          <h3 className="font-[var(--font-syne)] text-[24px] leading-[1.2] text-[#EFF5F0]">
-            Eat freely. Know exactly.
-          </h3>
-          <ul className="mt-3 space-y-2 text-[12px] text-[#A8B8A8]">
-            <li>• Just type what you ate — no scanning.</li>
-            <li>• AI turns meals into calories &amp; macros.</li>
-            <li>• Private, offline-first, and yours forever.</li>
-          </ul>
-        </div>
-
-        <button
-          type="button"
-          className="mb-4 mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-[#A8FF6B] px-4 py-2.5 text-[14px] font-semibold text-[#0D1210]"
-        >
-          Get Started
-        </button>
-      </div>
-    </PhoneFrame>
-  );
-}
-
-function MacroPill({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-full bg-[#131A17] px-3 py-2">
-      <p className="text-[10px] text-[#566356]">{label}</p>
-      <p className="text-[11px] text-[#EFF5F0]">{value}</p>
-    </div>
-  );
-}
-
-function MealRow({ name, calories }: { name: string; calories: string }) {
-  return (
-    <div className="flex items-center justify-between rounded-xl bg-[#131A17] px-3 py-2">
-      <p className="max-w-[60%] truncate text-[#EFF5F0]">{name}</p>
-      <p className="text-[11px] text-[#566356]">{calories}</p>
-    </div>
-  );
-}
-
-function StatCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl bg-[#131A17] px-3 py-3">
-      <p className="text-[11px] text-[#566356]">{label}</p>
-      <p className="mt-1 text-[13px] text-[#EFF5F0]">{value}</p>
     </div>
   );
 }
