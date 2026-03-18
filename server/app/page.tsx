@@ -187,9 +187,9 @@ export default function Home() {
             <div className="relative hidden w-full items-center justify-center md:flex md:w-[45%]">
               <div className="absolute inset-auto h-64 w-64 rounded-full bg-[radial-gradient(circle_at_center,rgba(168,255,107,0.08)_0%,transparent_70%)] blur-3xl" />
               <img
-                src="/trackerui.jpg"
-                alt="NutriMind Tracker screen"
-                className="relative z-10 w-[270px] rounded-[36px] shadow-[0_30px_80px_rgba(0,0,0,0.75)]"
+                src="/logo.png"
+                alt="NutriMind"
+                className="relative z-10 w-[280px] rounded-[56px] shadow-[0_30px_80px_rgba(0,0,0,0.75)]"
               />
             </div>
           </FadeUp>
@@ -330,12 +330,12 @@ export default function Home() {
                 />
               </FadeUp>
 
-              {/* Center — Logo */}
+              {/* Center — Progress (part 1, taller) */}
               <FadeUp delay={0.2}>
                 <img
-                  src="/logo.png"
-                  alt="NutriMind"
-                  className="relative z-20 w-[200px] scale-[1.04] rounded-[40px] shadow-[0_32px_80px_rgba(168,255,107,0.18)] md:w-[220px]"
+                  src="/progressui1.jpeg"
+                  alt="Progress screen"
+                  className="relative z-20 w-[240px] scale-[1.04] rounded-[28px] shadow-[0_32px_80px_rgba(0,0,0,0.85)] md:w-[270px]"
                 />
               </FadeUp>
 
