@@ -186,10 +186,11 @@ export default function Home() {
           <FadeUp delay={0.3}>
             <div className="relative hidden w-full items-center justify-center md:flex md:w-[45%]">
               <div className="absolute inset-auto h-64 w-64 rounded-full bg-[radial-gradient(circle_at_center,rgba(168,255,107,0.08)_0%,transparent_70%)] blur-3xl" />
-              <div className="relative z-10 flex h-[540px] w-[270px] flex-col items-center justify-center gap-3 rounded-[36px] border border-[rgba(168,255,107,0.12)] bg-[#131A17] shadow-[0_30px_80px_rgba(0,0,0,0.75)]">
-                <div className="h-10 w-10 rounded-full border border-dashed border-[rgba(168,255,107,0.3)]" />
-                <p className="text-[12px] text-[#566356]">Screenshot coming soon</p>
-              </div>
+              <img
+                src="/trackerui.jpg"
+                alt="NutriMind Tracker screen"
+                className="relative z-10 w-[270px] rounded-[36px] shadow-[0_30px_80px_rgba(0,0,0,0.75)]"
+              />
             </div>
           </FadeUp>
         </section>
@@ -319,12 +320,34 @@ export default function Home() {
           <div className="relative mt-10 flex flex-col items-center justify-center md:mt-16">
             <div className="pointer-events-none absolute inset-x-0 top-1/2 -z-10 h-80 -translate-y-1/2 bg-[radial-gradient(circle_at_center,rgba(168,255,107,0.08)_0%,transparent_70%)] blur-3xl" />
 
-            <FadeUp delay={0.1}>
-              <div className="relative z-10 flex h-[460px] w-full max-w-[880px] flex-col items-center justify-center gap-3 rounded-[24px] border border-[rgba(168,255,107,0.10)] bg-[#131A17] shadow-[0_40px_100px_rgba(0,0,0,0.8)]">
-                <div className="h-12 w-12 rounded-full border border-dashed border-[rgba(168,255,107,0.3)]" />
-                <p className="text-[13px] text-[#566356]">Screenshots coming soon</p>
-              </div>
-            </FadeUp>
+            <div className="relative flex w-full max-w-[860px] items-end justify-center gap-0">
+              {/* Left — Tracker */}
+              <FadeUp delay={0.1}>
+                <img
+                  src="/trackerui.jpg"
+                  alt="Tracker screen"
+                  className="relative z-10 w-[220px] translate-y-6 -rotate-6 rounded-[28px] shadow-[0_24px_60px_rgba(0,0,0,0.7)] md:w-[240px]"
+                />
+              </FadeUp>
+
+              {/* Center — Progress (part 1, taller) */}
+              <FadeUp delay={0.2}>
+                <img
+                  src="/progressui1.jpeg"
+                  alt="Progress screen"
+                  className="relative z-20 w-[240px] scale-[1.04] rounded-[28px] shadow-[0_32px_80px_rgba(0,0,0,0.85)] md:w-[270px]"
+                />
+              </FadeUp>
+
+              {/* Right — Profile */}
+              <FadeUp delay={0.3}>
+                <img
+                  src="/profileui.jpg"
+                  alt="Profile screen"
+                  className="relative z-10 w-[220px] translate-y-6 rotate-6 rounded-[28px] shadow-[0_24px_60px_rgba(0,0,0,0.7)] md:w-[240px]"
+                />
+              </FadeUp>
+            </div>
           </div>
         </section>
 
