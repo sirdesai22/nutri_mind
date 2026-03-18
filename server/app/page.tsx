@@ -183,7 +183,7 @@ export default function Home() {
           </div>
 
           {/* App screenshot */}
-          <FadeUp delay={0.3}>
+          {/* <FadeUp delay={0.3}>
             <div className="relative hidden w-full items-center justify-center md:flex md:w-[45%]">
               <div className="absolute inset-auto h-64 w-64 rounded-full bg-[radial-gradient(circle_at_center,rgba(168,255,107,0.08)_0%,transparent_70%)] blur-3xl" />
               <img
@@ -192,7 +192,7 @@ export default function Home() {
                 className="relative z-10 w-[260px] rounded-[56px] shadow-[0_30px_80px_rgba(0,0,0,0.75)] md:w-[300px] lg:w-[340px]"
               />
             </div>
-          </FadeUp>
+          </FadeUp> */}
         </section>
 
         {/* SOCIAL PROOF */}
