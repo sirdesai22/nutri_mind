@@ -1,5 +1,19 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Logo Generation Prompt
+
+Use the following prompt with an AI image generator (Midjourney, DALL·E, Ideogram, etc.) to create a logo that matches NutriMind's theme:
+
+```
+Minimal app icon for a nutrition tracking app called "NutriMind".
+Dark background (#0D1210 near-black deep green). A clean, modern logomark
+combining a stylised leaf or sprout with a subtle brain or neural spark motif,
+rendered in bright lime green (#A8FF6B) on the dark background.
+Flat vector style, no gradients, no shadows, no text.
+Rounded-square app icon format. The mark should feel intelligent,
+fresh, and minimal — like the intersection of nature and technology.
+```
+
 ## Getting Started
 
 First, run the development server:
