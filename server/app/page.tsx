@@ -189,7 +189,7 @@ export default function Home() {
               <img
                 src="/logo.png"
                 alt="NutriMind"
-                className="relative z-10 w-[280px] rounded-[56px] shadow-[0_30px_80px_rgba(0,0,0,0.75)]"
+                className="relative z-10 w-[260px] rounded-[56px] shadow-[0_30px_80px_rgba(0,0,0,0.75)] md:w-[300px] lg:w-[340px]"
               />
             </div>
           </FadeUp>
