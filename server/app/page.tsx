@@ -121,6 +121,14 @@ export default function Home() {
         >
           <div className="relative z-10 w-full md:w-[55%]">
             <FadeUp delay={0}>
+              <img
+                src="/logo.png"
+                alt="NutriMind"
+                className="mb-6 h-16 w-16 rounded-[16px] shadow-[0_8px_32px_rgba(168,255,107,0.15)]"
+              />
+            </FadeUp>
+
+            <FadeUp delay={0.05}>
               <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(168,255,107,0.18)] bg-[#1C2620]/60 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#A8FF6B]">
                 Powered by Gemini AI ✦ No barcode scanning ✦ No meal plans
               </div>
@@ -473,13 +481,10 @@ export default function Home() {
       <footer className="border-t border-[rgba(168,255,107,0.08)] bg-[#131A17] py-10 text-[#566356]">
         <div className="mx-auto flex max-w-[1200px] flex-col gap-6 px-6 md:px-20">
           <div className="flex flex-col items-center justify-between gap-4 text-[13px] md:flex-row">
-            <div className="flex items-center gap-1 text-[18px] font-semibold">
-              <span className="font-[var(--font-syne)] text-[#EFF5F0]">
-                Nutri
-              </span>
-              <span className="font-[var(--font-syne)] text-[#A8FF6B]">
-                Mind
-              </span>
+            <div className="flex items-center gap-2 text-[18px] font-semibold">
+              <img src="/logo.png" alt="NutriMind" className="h-7 w-7 rounded-[6px]" />
+              <span className="font-[var(--font-syne)] text-[#EFF5F0]">Nutri</span>
+              <span className="font-[var(--font-syne)] text-[#A8FF6B]">Mind</span>
             </div>
             <nav className="flex flex-wrap items-center justify-center gap-6 text-[13px]">
               <a href="#features" className="hover:text-[#EFF5F0]">

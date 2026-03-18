@@ -47,12 +47,11 @@ export function Navbar() {
         <div className="mx-auto flex max-w-[1200px] items-center justify-between px-6 py-4 md:px-20">
           <a
             href="#hero"
-            className="flex items-center gap-1 text-[20px] font-semibold tracking-tight"
+            className="flex items-center gap-2.5 text-[20px] font-semibold tracking-tight"
           >
+            <img src="/logo.png" alt="NutriMind logo" className="h-8 w-8 rounded-[8px]" />
             <span className="font-[var(--font-syne)] text-[#EFF5F0]">Nutri</span>
-            <span className="font-[var(--font-syne)] text-[#A8FF6B]">
-              Mind
-            </span>
+            <span className="font-[var(--font-syne)] text-[#A8FF6B]">Mind</span>
           </a>
 
           <nav className="hidden items-center gap-8 md:flex">
