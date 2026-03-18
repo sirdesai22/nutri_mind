@@ -121,14 +121,6 @@ export default function Home() {
         >
           <div className="relative z-10 w-full md:w-[55%]">
             <FadeUp delay={0}>
-              <img
-                src="/logo.png"
-                alt="NutriMind"
-                className="mb-6 h-16 w-16 rounded-[16px] shadow-[0_8px_32px_rgba(168,255,107,0.15)]"
-              />
-            </FadeUp>
-
-            <FadeUp delay={0.05}>
               <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(168,255,107,0.18)] bg-[#1C2620]/60 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#A8FF6B]">
                 Powered by Gemini AI ✦ No barcode scanning ✦ No meal plans
               </div>
@@ -338,12 +330,12 @@ export default function Home() {
                 />
               </FadeUp>
 
-              {/* Center — Progress (part 1, taller) */}
+              {/* Center — Logo */}
               <FadeUp delay={0.2}>
                 <img
-                  src="/progressui1.jpeg"
-                  alt="Progress screen"
-                  className="relative z-20 w-[240px] scale-[1.04] rounded-[28px] shadow-[0_32px_80px_rgba(0,0,0,0.85)] md:w-[270px]"
+                  src="/logo.png"
+                  alt="NutriMind"
+                  className="relative z-20 w-[200px] scale-[1.04] rounded-[40px] shadow-[0_32px_80px_rgba(168,255,107,0.18)] md:w-[220px]"
                 />
               </FadeUp>
 
