@@ -16,8 +16,8 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAnalytics } from '@/context/AnalyticsContext';
 import { useThemeStore } from '@/store/themeStore';
-import { darkTheme, lightTheme } from '@/app/theme/colors';
-import { fonts } from '@/app/theme/typography';
+import { darkTheme, lightTheme } from '@/theme/colors';
+import { fonts } from '@/theme/typography';
 
 const ONBOARDING_COMPLETE_KEY = 'onboarding_complete';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');

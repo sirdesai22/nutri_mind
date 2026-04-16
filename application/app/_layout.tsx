@@ -7,7 +7,7 @@ import { AnalyticsProvider, NoopAnalyticsProvider } from '@/context/AnalyticsCon
 import { Platform, StatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useThemeStore } from '@/store/themeStore';
-import { darkTheme, lightTheme } from './theme/colors';
+import { darkTheme, lightTheme } from '@/theme/colors';
 
 if (Platform.OS === 'ios') {
   require('react-native-svg');

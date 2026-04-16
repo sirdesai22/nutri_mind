@@ -16,8 +16,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { supabase } from '@/lib/supabase';
 import { useAnalytics } from '@/context/AnalyticsContext';
-import { darkTheme, lightTheme } from '@/app/theme/colors';
-import { fonts } from '@/app/theme/typography';
+import { darkTheme, lightTheme } from '@/theme/colors';
+import { fonts } from '@/theme/typography';
 import { useThemeStore } from '@/store/themeStore';
 
 WebBrowser.maybeCompleteAuthSession();

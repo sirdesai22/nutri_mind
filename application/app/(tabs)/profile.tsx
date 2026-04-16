@@ -18,9 +18,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { useMealStore } from '@/store/mealStore';
 import { useProfileStore } from '@/store/profileStore';
 import { useThemeStore } from '@/store/themeStore';
-import { darkTheme, lightTheme } from '@/app/theme/colors';
-import { fonts } from '@/app/theme/typography';
-import { ThemeToggle } from '../components/ThemeToggle';
+import { darkTheme, lightTheme } from '@/theme/colors';
+import { fonts } from '@/theme/typography';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();

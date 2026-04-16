@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { fonts } from '@/app/theme/typography';
+import { fonts } from '@/theme/typography';
 
 interface StatTileProps {
   value: number | string;

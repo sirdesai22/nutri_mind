@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.sirdesaiexe.calorie_tracker'
+    namespace 'com.sirdesaiexe.nutrimind'
     defaultConfig {
-        applicationId 'com.sirdesaiexe.calorie_tracker'
+        applicationId 'com.sirdesaiexe.nutrimind'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

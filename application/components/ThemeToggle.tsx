@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, TouchableOpacity } from 'react-native';
 import { useThemeStore } from '@/store/themeStore';
-import { darkTheme, lightTheme } from '../theme/colors';
+import { darkTheme, lightTheme } from '@/theme/colors';
 
 export const ThemeToggle = () => {
   const { theme, toggleTheme } = useThemeStore();

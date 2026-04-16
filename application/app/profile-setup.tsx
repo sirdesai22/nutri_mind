@@ -15,8 +15,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useProfileStore } from '@/store/profileStore';
 import { useThemeStore } from '@/store/themeStore';
-import { darkTheme, lightTheme } from '@/app/theme/colors';
-import { fonts } from '@/app/theme/typography';
+import { darkTheme, lightTheme } from '@/theme/colors';
+import { fonts } from '@/theme/typography';
 
 export default function ProfileSetupScreen() {
   const router = useRouter();

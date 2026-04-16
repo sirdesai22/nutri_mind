@@ -1,4 +1,4 @@
-package com.sirdesaiexe.calorie_tracker
+package com.sirdesaiexe.nutrimind
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

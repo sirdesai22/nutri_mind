@@ -1,4 +1,4 @@
-package com.sirdesaiexe.calorie_tracker
+package com.sirdesaiexe.nutrimind
 
 import android.app.Application
 import android.content.res.Configuration

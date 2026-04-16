@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Animated as RNAnimated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { fonts } from '@/app/theme/typography';
+import { fonts } from '@/theme/typography';
 
 interface MealCardProps {
   food: string;

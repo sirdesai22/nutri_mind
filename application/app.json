@@ -9,7 +9,7 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "nutrimind",
+      "bundleIdentifier": "com.sirdesaiexe.nutrimind",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -20,7 +20,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.sirdesaiexe.calorie_tracker"
+      "package": "com.sirdesaiexe.nutrimind"
     },
     "web": {
       "bundler": "metro",

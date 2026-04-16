@@ -17,8 +17,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { useAnalytics } from '@/context/AnalyticsContext';
 import { useConfigStore } from '@/store/configStore';
 import { useThemeStore } from '@/store/themeStore';
-import { darkTheme, lightTheme } from './theme/colors';
-import { fonts } from './theme/typography';
+import { darkTheme, lightTheme } from '@/theme/colors';
+import { fonts } from '@/theme/typography';
 
 export default function SetupScreen() {
   const router = useRouter();
