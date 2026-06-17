@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
@@ -46,33 +47,30 @@ export default function AuthScreen() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
+  const [googleRequest, googleResponse, googlePromptAsync] = Google.useAuthRequest({
+    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
+  });
+
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: 'nutrimind://auth/callback',
-          skipBrowserRedirect: true,
-        },
-      });
-      if (error) throw error;
-      if (data?.url) {
-        const result = await WebBrowser.openAuthSessionAsync(
-          data.url,
-          'nutrimind://auth/callback'
-        );
-        if (result.type === 'success' && result.url) {
-          const url = new URL(result.url);
-          const params = url.hash ? new URLSearchParams(url.hash.slice(1)) : url.searchParams;
-          const accessToken = params.get('access_token');
-          const refreshToken = params.get('refresh_token');
-          if (accessToken && refreshToken) {
-            await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
-            capture('auth_signed_in', { method: 'google' });
-            router.replace('/setup');
-          }
-        }
+      const androidClientId = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID;
+      if (!androidClientId) {
+        Alert.alert('Configuration needed', 'Google Android Client ID is not set. Please configure EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID in your .env file.');
+        return;
+      }
+      const result = await googlePromptAsync();
+      if (result.type === 'success' && result.authentication) {
+        const { data: userData, error: userError } = await supabase.auth.signInWithIdToken({
+          provider: 'google',
+          token: result.authentication.accessToken,
+          nonce: undefined,
+        });
+        if (userError) throw userError;
+        capture('auth_signed_in', { method: 'google' });
+        router.replace('/setup');
       }
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Google sign-in failed';
