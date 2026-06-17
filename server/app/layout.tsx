@@ -17,9 +17,9 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "NutriMind — Effortless AI Nutrition Tracking",
+  title: "NutriMind — Open-Source AI Nutrition Tracking",
   description:
-    "NutriMind turns anything you eat into instant calories and macros with Gemini AI. No barcode scanning, no meal plans—just type what you ate.",
+    "NutriMind turns anything you eat into instant calories and macros with Gemini AI. No barcode scanning, no meal plans—just type what you ate. Open source and self-hostable.",
 };
 
 export default function RootLayout({

@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
+  IconBrandGithub,
   IconMenu2,
+  IconStar,
   IconX,
 } from "@tabler/icons-react";
 
@@ -65,6 +67,16 @@ export function Navbar() {
               </a>
             ))}
             <a
+              href="https://github.com/sirdesai22/nutri_mind"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-2xl border border-[rgba(168,255,107,0.18)] px-4 py-2.5 text-[13px] font-medium text-[#A8FF6B] transition-colors duration-200 hover:bg-[#1C2620] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8FF6B]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D1210]"
+            >
+              <IconBrandGithub size={16} />
+              <span>GitHub</span>
+              <IconStar size={14} className="text-[#566356]" />
+            </a>
+            <a
               href="#pricing"
               className="rounded-2xl bg-[#A8FF6B] px-5 py-2.5 text-[14px] font-semibold text-[#0D1210] transition-transform duration-200 hover:brightness-110 hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8FF6B]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D1210]"
             >
@@ -94,22 +106,32 @@ export function Navbar() {
           >
             <div className="mx-auto flex max-w-[1200px] flex-col gap-4 px-6 py-6">
               {navLinks.map((link) => (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setOpen(false)}
+                    className="text-[16px] font-medium text-[#EFF5F0] transition-colors duration-200 hover:text-[#A8FF6B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8FF6B]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#131A17]"
+                  >
+                    {link.label}
+                  </a>
+                ))}
                 <a
-                  key={link.href}
-                  href={link.href}
+                  href="https://github.com/sirdesai22/nutri_mind"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   onClick={() => setOpen(false)}
-                  className="text-[16px] font-medium text-[#EFF5F0] transition-colors duration-200 hover:text-[#A8FF6B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8FF6B]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#131A17]"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[rgba(168,255,107,0.18)] px-6 py-3 text-[15px] font-medium text-[#A8FF6B] transition-colors duration-200 hover:bg-[#1C2620] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8FF6B]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#131A17]"
                 >
-                  {link.label}
+                  <IconBrandGithub size={18} />
+                  GitHub
                 </a>
-              ))}
-              <a
-                href="#pricing"
-                onClick={() => setOpen(false)}
-                className="mt-2 inline-flex items-center justify-center rounded-2xl bg-[#A8FF6B] px-6 py-3 text-[15px] font-semibold text-[#0D1210] transition-transform duration-200 hover:brightness-110 hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8FF6B]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#131A17]"
-              >
-                Get Started
-              </a>
+                <a
+                  href="#pricing"
+                  onClick={() => setOpen(false)}
+                  className="mt-2 inline-flex items-center justify-center rounded-2xl bg-[#A8FF6B] px-6 py-3 text-[15px] font-semibold text-[#0D1210] transition-transform duration-200 hover:brightness-110 hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8FF6B]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#131A17]"
+                >
+                  Get Started
+                </a>
             </div>
           </motion.nav>
         )}

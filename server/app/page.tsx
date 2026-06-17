@@ -2,6 +2,7 @@ import {
   IconArrowDownCircle,
   IconBolt,
   IconBrain,
+  IconBrandGithub,
   IconChartBar,
   IconChartLine,
   IconCheck,
@@ -10,6 +11,7 @@ import {
   IconMoon,
   IconPencil,
   IconShield,
+  IconStar,
   IconWifi,
 } from "@tabler/icons-react";
 import { FadeUp } from "../components/fade-up";
@@ -18,7 +20,7 @@ import { Navbar } from "../components/navbar";
 const stats = [
   { label: "meals analyzed", value: "10000+" },
   { label: "AI response time", value: "2 sec" },
-  { label: "one-time, forever", value: "$9" },
+  { label: "open source", value: "100%" },
   { label: "subscriptions needed", value: "0" },
 ];
 
@@ -122,7 +124,8 @@ export default function Home() {
           <div className="relative z-10 w-full md:w-[55%]">
             <FadeUp delay={0}>
               <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(168,255,107,0.18)] bg-[#1C2620]/60 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#A8FF6B]">
-                Powered by Gemini AI ✦ No barcode scanning ✦ No meal plans
+                <IconBrandGithub size={14} />
+                Open Source ✦ Powered by Gemini AI ✦ No barcode scanning
               </div>
             </FadeUp>
 
@@ -321,29 +324,29 @@ export default function Home() {
             <div className="pointer-events-none absolute inset-x-0 top-1/2 -z-10 h-80 -translate-y-1/2 bg-[radial-gradient(circle_at_center,rgba(168,255,107,0.08)_0%,transparent_70%)] blur-3xl" />
 
             <div className="relative flex w-full max-w-[860px] items-end justify-center gap-0">
-              {/* Left — Tracker */}
+              {/* Left — Chat UI */}
               <FadeUp delay={0.1}>
                 <img
-                  src="/trackerui.jpg"
-                  alt="Tracker screen"
+                  src="/playstore/chatUI.png"
+                  alt="Chat interface"
                   className="relative z-10 w-[220px] translate-y-6 -rotate-6 rounded-[28px] shadow-[0_24px_60px_rgba(0,0,0,0.7)] md:w-[240px]"
                 />
               </FadeUp>
 
-              {/* Center — Progress (part 1, taller) */}
+              {/* Center — Macros page */}
               <FadeUp delay={0.2}>
                 <img
-                  src="/progressui1.jpeg"
-                  alt="Progress screen"
+                  src="/playstore/macros_page.png"
+                  alt="Macros breakdown"
                   className="relative z-20 w-[240px] scale-[1.04] rounded-[28px] shadow-[0_32px_80px_rgba(0,0,0,0.85)] md:w-[270px]"
                 />
               </FadeUp>
 
-              {/* Right — Profile */}
+              {/* Right — Progress */}
               <FadeUp delay={0.3}>
                 <img
-                  src="/profileui.jpg"
-                  alt="Profile screen"
+                  src="/playstore/progress_ui.png"
+                  alt="Progress screen"
                   className="relative z-10 w-[220px] translate-y-6 rotate-6 rounded-[28px] shadow-[0_24px_60px_rgba(0,0,0,0.7)] md:w-[240px]"
                 />
               </FadeUp>
@@ -351,10 +354,75 @@ export default function Home() {
           </div>
         </section>
 
+        {/* OPEN SOURCE */}
+        <section className="rounded-[32px] bg-[#131A17] px-4 py-24 md:px-8 md:py-32">
+          <FadeUp>
+            <p className="text-[12px] font-semibold uppercase tracking-[0.22em] text-[#566356]">
+              OPEN SOURCE
+            </p>
+          </FadeUp>
+          <FadeUp delay={0.1}>
+            <h2 className="font-[var(--font-syne)] text-[30px] leading-[1.15] text-[#EFF5F0] md:text-[38px] lg:text-[44px]">
+              Self-host or contribute.
+            </h2>
+          </FadeUp>
+          <FadeUp delay={0.2}>
+            <p className="mt-3 max-w-2xl text-[15px] leading-[1.7] text-[#A8B8A8] md:text-[16px]">
+              NutriMind is fully open source. Use it as a SaaS starter, fork it
+              for your own product, or contribute back. Everything is managed —
+              database, auth, AI, analytics — all wired up and ready to scale.
+            </p>
+          </FadeUp>
+
+          <FadeUp delay={0.25}>
+            <a
+              href="https://github.com/sirdesai22/nutri_mind"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-8 inline-flex items-center gap-3 rounded-2xl border border-[rgba(168,255,107,0.18)] bg-[#1C2620]/80 px-6 py-3.5 text-[15px] font-semibold text-[#A8FF6B] transition-all duration-200 hover:bg-[#1C2620] hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8FF6B]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#131A17]"
+            >
+              <IconBrandGithub size={20} />
+              Star on GitHub
+              <span className="inline-flex items-center gap-1 rounded-full bg-[#A8FF6B]/10 px-2.5 py-0.5 text-[12px] text-[#A8FF6B]">
+                <IconStar size={12} />
+                sirdesai22/nutri_mind
+              </span>
+            </a>
+          </FadeUp>
+
+          <div className="mt-12 grid gap-4 md:grid-cols-3">
+            {[
+              {
+                title: "MIT Licensed",
+                desc: "Use it anywhere — personal, commercial, or as a template for your SaaS.",
+              },
+              {
+                title: "Self-Hostable",
+                desc: "Bring your own Gemini key, Supabase instance, and everything runs on your infra.",
+              },
+              {
+                title: "AI-First Stack",
+                desc: "Expo + Next.js + Supabase + Gemini. Modern, fast, and easy to extend.",
+              },
+            ].map((item, i) => (
+              <FadeUp key={item.title} delay={0.1 * i}>
+                <div className="h-full rounded-2xl border border-[rgba(168,255,107,0.08)] bg-[#1C2620]/70 p-6">
+                  <h3 className="font-[var(--font-syne)] text-[18px] text-[#EFF5F0]">
+                    {item.title}
+                  </h3>
+                  <p className="mt-2 text-[14px] leading-[1.6] text-[#A8B8A8]">
+                    {item.desc}
+                  </p>
+                </div>
+              </FadeUp>
+            ))}
+          </div>
+        </section>
+
         {/* PRICING */}
         <section
           id="pricing"
-          className="space-y-8 rounded-[32px] bg-[#131A17] px-4 py-24 md:px-8 md:py-32"
+          className="space-y-8 rounded-[32px] bg-[#131A17] px-4 py-24 md:px-8 md:py-32 mt-5"
         >
           <FadeUp>
             <p className="text-[12px] font-semibold uppercase tracking-[0.22em] text-[#566356]">
@@ -452,6 +520,15 @@ export default function Home() {
                   Get Early Access
                 </a>
                 <a
+                  href="https://github.com/sirdesai22/nutri_mind"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-2xl border border-[rgba(168,255,107,0.18)] px-7 py-3.5 text-[15px] font-semibold text-[#A8FF6B] transition-colors duration-200 hover:bg-[#1C2620] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8FF6B]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D1210]"
+                >
+                  <IconBrandGithub size={20} />
+                  Star on GitHub
+                </a>
+                <a
                   href="#how-it-works"
                   className="inline-flex items-center justify-center rounded-2xl border border-[rgba(168,255,107,0.18)] px-7 py-3.5 text-[15px] font-semibold text-[#A8FF6B] transition-colors duration-200 hover:bg-[#1C2620] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A8FF6B]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0D1210]"
                 >
@@ -462,7 +539,7 @@ export default function Home() {
 
             <FadeUp delay={0.3}>
               <p className="mt-4 text-[13px] text-[#566356]">
-                No account required with BYOK
+                Open source on GitHub — self-host or contribute
               </p>
             </FadeUp>
           </div>
@@ -487,6 +564,15 @@ export default function Home() {
               </a>
               <a href="#pricing" className="hover:text-[#EFF5F0]">
                 Pricing
+              </a>
+              <a
+                href="https://github.com/sirdesai22/nutri_mind"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 hover:text-[#EFF5F0]"
+              >
+                <IconBrandGithub size={14} />
+                GitHub
               </a>
             </nav>
             <div className="inline-flex items-center gap-2 rounded-full border border-[rgba(168,255,107,0.18)] bg-[#1C2620] px-3 py-1 text-[11px] text-[#A8B8A8]">
